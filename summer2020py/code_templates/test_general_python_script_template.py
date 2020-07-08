@@ -1,6 +1,6 @@
 import unittest
 import logging
-import FHTLIMS.setup_logger as setup_logger
+import summer2020py.setup_logger as setup_logger
 import general_python_script_template as gpst
 
 

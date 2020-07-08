@@ -23,3 +23,34 @@ for the number of cur_sample in SAMPLES
 			print dst
 			creates symbolic link
 				//do not undestand this either 
+
+Start of command
+
+if [ -d "output.gdby_prep" ] 
+then 
+	echo "output directory exists, deleting gbdy_prep: " 
+	rm -r output.gdby_prep 
+echo "making output directory gbdy_prep:" 
+mkdir(output.gbdy_prep)
+for cur_sample in SAMPLES
+do 
+	echo"cur_sample $cure_sample"
+	cur_dir = //could not find how to do this part
+	mkdir(cur_dir)
+	
+	cur_search = //same thing as cur_dir
+	echo"cur_search $cur_search"
+	cur_file_list = cure_search* //do not believe this is correct but believe it's something like this
+	sort -o cur_file_list cur_file_list //this might work but I don't think it will
+	echo"cur_file_list $cur_file_list)
+	
+	for cur_file in cur_file_list
+		basenme = basename($cur_file)
+		dst = //same thing as cur_dir
+		echo "dst $dst"
+		ln -s cur_file dst
+done
+	
+
+	 
+

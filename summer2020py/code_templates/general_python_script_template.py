@@ -1,6 +1,6 @@
 import logging
-import FHTLIMS
-import FHTLIMS.setup_logger as setup_logger
+import summer2020py
+import summer2020py.setup_logger as setup_logger
 import argparse
 import sys
 
@@ -14,9 +14,9 @@ def build_parser():
     parser.add_argument("--hostname", help="lims db host name", type=str, default="getafix-v")
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
-        type=str, default=FHTLIMS.default_config_filepath)
+        type=str, default=summer2020py.default_config_filepath)
     parser.add_argument("--config_section", help="section of config file to use for information about how to connect to CDD API, ArxLab API etc.",
-        type=str, default=FHTLIMS.default_config_section)
+        type=str, default=summer2020py.default_config_section)
 
     parser.add_argument("--queue_choice", "-qc", help="which of the queues to work on - valid values are roast, brew, both", type=str,
         choices=["roast", "brew", "both"], default="both")

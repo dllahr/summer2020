@@ -4,7 +4,6 @@ import summer2020py.setup_logger as setup_logger
 import argparse
 import sys
 
-
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
 
@@ -28,32 +27,48 @@ def build_parser():
     mutually_exclusive_group.add_argument("--option2", action="store", dest="option2", help="provide argument for option2", default=None)
     return parser
 
-
 def main(args):
-      if os.path.exists(output.gbdy_prep):
-	print("output directory exists, deleting gbdy_prep:", output.gbdy_prep)
-	shutil.rmtree(output.gbdy_prep)
+    choice = input("c for Command line or g for.grp file")
+    if(choice =="c"):
+        print("command line")
+        filename = sys.argv[-1]
+        print(filename)
+        #do some thing using the filename so that you can call snippet using the Sample you want as the argument
+        #and it all works as it should 
+    elif(choice =="g"):
+        print(".grp file")
+        filename = sys.argv[-1]
+        print(filename)
+        #do some thing using the filename so that you can call snippet using the Sample you want as the argument
+        #and it all works as it should 
+    else:
+        print("bad input")
+
+def snippet(SAMPLES):
+    if os.path.exists(output.gbdy_prep):
+	    print("output directory exists, deleting gbdy_prep:", output.gbdy_prep)
+	    shutil.rmtree(output.gbdy_prep)
 
     print("making output directory gbdy_prep:", output.gbdy_prep)
     os.mkdir(output.gbdy_prep)
 
     for cur_sample in SAMPLES:
-	print("cur_sample:", cur_sample)
-	cur_dir = os.path.join(output.gbdy_prep, cur_sample)
-	os.mkdir(cur_dir)
+	    print("cur_sample:", cur_sample)
+	    cur_dir = os.path.join(output.gbdy_prep, cur_sample)
+	    os.mkdir(cur_dir)
 
-	cur_search = os.path.join(input.dir, cur_sample + "*")
-	print("cur_search:", cur_search)
-	cur_file_list = glob.glob(cur_search)
-	cur_file_list.sort()
-	print("cur_file_list:", cur_file_list)
+	    cur_search = os.path.join(input.dir, cur_sample + "*")
+	    print("cur_search:", cur_search)
+	    cur_file_list = glob.glob(cur_search)
+	    cur_file_list.sort()
+	    print("cur_file_list:", cur_file_list)
 
-	for cur_file in cur_file_list:
-	    basename = os.path.basename(cur_file)
-	    dst = os.path.join(cur_dir, basename)
-	    print("dst:", dst)
+	    for cur_file in cur_file_list:
+	        basename = os.path.basename(cur_file)
+	        dst = os.path.join(cur_dir, basename)
+	        print("dst:", dst)
 
-	    os.symlink(cur_file, dst)
+	        os.symlink(cur_file, dst)
 
 
 

@@ -3,6 +3,9 @@ import summer2020py
 import summer2020py.setup_logger as setup_logger
 import argparse
 import sys
+import os
+import glob
+import shutil
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
@@ -29,6 +32,8 @@ def build_parser():
 
 def main(args):
     choice = input("c for Command line or g for.grp file")
+    output = input("diretory of output")
+    inputs = input("directory of input")
     if(choice =="c"):
         print("command line")
         filename = sys.argv[-1]
@@ -44,7 +49,7 @@ def main(args):
     else:
         print("bad input")
 
-def snippet(SAMPLES):
+def snippet(SAMPLES,output,inputs):
     if os.path.exists(output.gbdy_prep):
 	    print("output directory exists, deleting gbdy_prep:", output.gbdy_prep)
 	    shutil.rmtree(output.gbdy_prep)
@@ -57,7 +62,7 @@ def snippet(SAMPLES):
 	    cur_dir = os.path.join(output.gbdy_prep, cur_sample)
 	    os.mkdir(cur_dir)
 
-	    cur_search = os.path.join(input.dir, cur_sample + "*")
+	    cur_search = os.path.join(inputs.dir, cur_sample + "*")
 	    print("cur_search:", cur_search)
 	    cur_file_list = glob.glob(cur_search)
 	    cur_file_list.sort()

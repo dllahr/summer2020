@@ -32,14 +32,17 @@ def build_parser():
 
 def main(args):
     choice = input("c for Command line or g for.grp file")
-    output = input("diretory of output")
-    inputs = input("directory of input")
+    output = input("diretory of output") #output should not be a string but I don't know what it should be
+    inputs = input("directory of input")#no idea what the input.dir line is for this is here so that I can pass it as an a
+                                        #argument and not get an error of course the code doesn't work now 
+                                        #but there are other problems besides this
     if(choice =="c"):
         print("command line")
         filename = sys.argv[-1]
         print(filename)
         #do some thing using the filename so that you can call snippet using the Sample you want as the argument
         #and it all works as it should 
+        snippet(filename, output, inputs)
     elif(choice =="g"):
         print(".grp file")
         filename = sys.argv[-1]

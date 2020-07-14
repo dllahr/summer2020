@@ -30,43 +30,37 @@ def build_parser():
     return parser
 
 def main(args):
-    logger.debug("This is args{}".format(args))
     Sample_list = None
-    #choice = input("c for Command line or g for.grp file")
-    #output = input("diretory of output") #output should not be a string but I don't know what it should be
-    #inputs = input("directory of input")#no idea what the input.dir line is for this is here so that I can pass it as an a
-                                        #argument and not get an error of course the code doesn't work now 
-                                        #but there are other problems besides this
-    if(args.SAMPLEFILE is None ):
+    #creating the variable Sample_list to store a list of the samples 
+    if(args.SAMPLEFILE is None ): #checking to see if the command line used the file or if they just added a Sample
         logger.debug("SAMPLES")
         logger.debug(args.SAMPLES)
-        Sample_list = args.SAMPLES
-        #do some thing using the filename so that you can call snippet using the Sample you want as the argument
-        #and it all works as it should 
+        Sample_list = args.SAMPLES #adding the sample given on the command line into the sample list
     else:
         logger.debug("SAMPLEFILE")
         logger.debug(args.SAMPLEFILE)
-        Sample_list = load_sample(args.SAMPLEFILE)
-    prepare_output_dir(args.output_dir)
-    for sample in Sample_list:
-        prepare_sample_dir(sample,args.out_dir,args.input_dir)
+        Sample_list = load_sample(args.SAMPLEFILE) #calling the method load sample to add all of the samples in the file to the sample list
+    prepare_output_dir(args.output_dir) #preparing the output directory 
+    for sample in Sample_list: #each sample in the sample list runs through the for loop
+        prepare_sample_dir(sample,args.out_dir,args.input_dir) #calls the method prepare-sample-dir on the sample that is currently iterating
 
 def load_sample(Sample_File):
-    pass
+    pass #taking in a .grp file returns a list of all the sample in that file
 
 def prepare_output_dir(output_dir_path):
-    if os.path.exists(output_dir_path):
-	    print("output_dir_path directory exists, output_dir_path:", output_dir_path)
-	    shutil.rmtree(output_dir_path)
+    if os.path.exists(output_dir_path): #if the path output_dir_path exists 
+	    logger.debug("output_dir_path directory exists, output_dir_path: {}".format(output_dir_path))
+	    shutil.rmtree(output_dir_path) #delete the path output_dir_path
 
-    print("making output directory output_dir_path:", output_dir_path)
-    os.mkdir(output_dir_path)
+    logger.debug("making output directory output_dir_path: {}".format(output_dir_path))
+    os.mkdir(output_dir_path) #create the directory output_dir_path
 
 def prepare_sample_dir(sample, out_dir,input_dir):
     cur_dir = make_sample_dir(sample, out_dir)
     Sample_input_files = find_sample_input_files(sample, input_dir)
     for input_file in Sample_input_files:
         create_sample_symlink(input_file,cur_dir)
+
 def make_sample_dir(sample, out_dir):
     pass
 def find_sample_input_files(sample, input_dir):

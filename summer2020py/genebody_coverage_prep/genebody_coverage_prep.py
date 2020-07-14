@@ -56,10 +56,10 @@ def load_sample(Sample_File):
 
 def prepare_output_dir(output_dir_path):
     if os.path.exists(output_dir_path):
-	    print("output_dir_path directory exists, deleting gbdy_prep:", output_dir_path)
+	    print("output_dir_path directory exists, output_dir_path:", output_dir_path)
 	    shutil.rmtree(output_dir_path)
 
-    print("making output directory gbdy_prep:", output_dir_path)
+    print("making output directory output_dir_path:", output_dir_path)
     os.mkdir(output_dir_path)
 
 def prepare_sample_dir(sample, out_dir,input_dir):

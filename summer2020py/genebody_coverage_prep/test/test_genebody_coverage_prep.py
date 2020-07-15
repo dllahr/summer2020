@@ -38,15 +38,13 @@ class TestGenebodyCoveragePrep(unittest.TestCase):
         self.assertTrue(os.path.exists(test_directory))
         self.assertFalse(os.path.exists(test_file))
         shutil.rmtree(test_directory)
-    def test_prepare_output_dir(self):
-        pass
     def test_make_sample_dir(self):
         pass
     def test_find_sample_input_files(self):
         pass
     def test_create_sample_symlink(self):
         pass
-    
+
 
 
 

@@ -22,24 +22,35 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
 
 class TestGenebodyCoveragePrep(unittest.TestCase):
+    def setup(self):
+        pass
+    
+    
     def test_main(self):
         #gcp.main(None)
         pass
     def test_prepare_output_dir(self):
         test_directory = "testing"
+        shutil.rmtree(test_directory)
         self.assertFalse(os.path.exists(test_directory))
         gcp.prepare_output_dir(test_directory)
-        self.assertTrue(os.path.exists(test_directory))
-        test_file = os.path.join(test_directory, "test_file")
-        f = open(test_file,"w")
-        f.write("1")
-        f.close()
+        self.assertTrue(os.path.exists(test_directory))  #making sure that the output directory was created
+        test_file = os.path.join(test_directory, "test_file") #adding a file to that directory 
+        f = open(test_file,"w")#opening the file in write mode
+        f.write("1") #adding the number 1 to the file
+        f.close()#closing the file
         gcp.prepare_output_dir(test_directory)
-        self.assertTrue(os.path.exists(test_directory))
-        self.assertFalse(os.path.exists(test_file))
-        shutil.rmtree(test_directory)
+        self.assertTrue(os.path.exists(test_directory)) #making sure that the output directory was created
+        self.assertFalse(os.path.exists(test_file))#making sure that this is a new directory and not the old one that had a file in it
+        shutil.rmtree(test_directory)#delete the test directory
     def test_make_sample_dir(self):
-        pass
+        test_directory = "testing"
+        test_sample = "sample"
+        gcp.prepare_output_dir(test_directory)
+        new_dir = gcp.make_sample_dir(test_sample, test_directory)#call the make_sample_dir and save that directoy to new_dir
+        self.assertTrue(os.path.exists(new_dir)) #see that the new directory has been created
+        shutil.rmtree(new_dir) #delete the new directory 
+        shutil.rmtree(test_directory)#delete the test directory
     def test_find_sample_input_files(self):
         pass
     def test_create_sample_symlink(self):

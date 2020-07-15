@@ -62,9 +62,17 @@ def prepare_sample_dir(sample, out_dir,input_dir):
         create_sample_symlink(input_file,cur_dir)
 
 def make_sample_dir(sample, out_dir):
-    pass
+    logger.debug(" cur_sample: {}".format(cur_sample))
+    cur_dir = os.path.join(sample, out_dir) #create a variable to store where you want the directory to go 
+    os.mkdir(cur_dir)
+    return cur_dir #return where the directory is so that it can be saved to a variable to use elsewhere
+
+
 def find_sample_input_files(sample, input_dir):
     pass
+
+
+
 def create_sample_symlink(input_file, cur_dir):
     pass
 
@@ -73,8 +81,7 @@ def snippet(SAMPLES,output,inputs):
 
     for cur_sample in SAMPLES:
 	    print("cur_sample:", cur_sample)
-	    cur_dir = os.path.join(output.gbdy_prep, cur_sample)
-	    os.mkdir(cur_dir)
+
 
 	    cur_search = os.path.join(inputs.dir, cur_sample + "*")
 	    print("cur_search:", cur_search)

@@ -45,7 +45,7 @@ def main(args):
         prepare_sample_dir(sample,args.out_dir,args.input_dir) #calls the method prepare-sample-dir on the sample that is currently iterating
 
 def load_sample(Sample_File):
-    pass #taking in a .grp file returns a list of all the sample in that file
+    return [] #taking in a .grp file returns a list of all the sample in that file
 
 def prepare_output_dir(output_dir_path):
     if os.path.exists(output_dir_path): #if the path output_dir_path exists 

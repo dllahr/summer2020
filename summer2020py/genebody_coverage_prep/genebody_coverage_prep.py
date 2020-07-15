@@ -62,40 +62,59 @@ def prepare_sample_dir(sample, out_dir,input_dir):
         create_sample_symlink(input_file,cur_dir)
 
 def make_sample_dir(sample, out_dir):
-    logger.debug(" cur_sample: {}".format(cur_sample))
+    logger.debug(" sample: {}".format(sample))
     cur_dir = os.path.join(sample, out_dir) #create a variable to store where you want the directory to go 
     os.mkdir(cur_dir)
     return cur_dir #return where the directory is so that it can be saved to a variable to use elsewhere
 
 
 def find_sample_input_files(sample, input_dir):
-    pass
-
+    cur_search = os.path.join(input_dir, sample + "*") #variable cur_search is the joined paths input.dir and cur_sample plus wildcard
+    logger.debug("cur_search: {}".format(cur_search))
+    cur_file_list = glob.glob(cur_search) #Return a list of path names that matchcur_search and put that in cur_file_list
+    cur_file_list.sort() #sort the list of path names
+    logger.debug("cur_file_list: {}".format(cur_file_list))
+    return cur_file_list
 
 
 def create_sample_symlink(input_file, cur_dir):
-    pass
+    basename = os.path.basename(input_file) #Return the base name of pathname path and set it equal to basename
+    dst = os.path.join(cur_dir, basename)#join the paths cur_dir and basename and set it equal to dst
+    logger.debug("dst: {}".format(dst))
+    os.symlink(input_file, dst)#creates symbolic link to input_file dst
 
 def snippet(SAMPLES,output,inputs):
-    
+    # if os.path.exists(output.gbdy_prep):
+	#     print("output directory exists, deleting gbdy_prep:", output.gbdy_prep)
+	#     shutil.rmtree(output.gbdy_prep)
 
-    for cur_sample in SAMPLES:
-	    print("cur_sample:", cur_sample)
+    # print("making output directory gbdy_prep:", output.gbdy_prep)
+    # os.mkdir(output.gbdy_prep)
+
+    # for cur_sample in SAMPLES:
+	#     print("cur_sample:", cur_sample)
+	#     cur_dir = os.path.join(output.gbdy_prep, cur_sample)
+	#     os.mkdir(cur_dir)
+
+	#     cur_search = os.path.join(input.dir, cur_sample + "*")
+	#     print("cur_search:", cur_search)
+	#     cur_file_list = glob.glob(cur_search)
+	#     cur_file_list.sort()
+	#     print("cur_file_list:", cur_file_list)
+
+	#     for cur_file in cur_file_list:
+	#         basename = os.path.basename(cur_file)
+	#         dst = os.path.join(cur_dir, basename)
+	#         print("dst:", dst)
+
+	#         os.symlink(cur_file, dst)
+    #this is just here incase i need to look back on it 
+    pass 
 
 
-	    cur_search = os.path.join(inputs.dir, cur_sample + "*")
-	    print("cur_search:", cur_search)
-	    cur_file_list = glob.glob(cur_search)
-	    cur_file_list.sort()
-	    print("cur_file_list:", cur_file_list)
+	    
 
-	    for cur_file in cur_file_list:
-	        basename = os.path.basename(cur_file)
-	        dst = os.path.join(cur_dir, basename)
-	        print("dst:", dst)
-
-	        os.symlink(cur_file, dst)
-
+	    
 
 
 

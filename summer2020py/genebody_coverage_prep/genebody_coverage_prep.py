@@ -41,7 +41,7 @@ def main(args):
         Sample_list = load_sample(args.SAMPLEFILE) #calling the method load sample to add all of the samples in the file to the sample list
     prepare_output_dir(args.output_dir) #preparing the output directory 
     for sample in Sample_list: #each sample in the sample list runs through the for loop
-        prepare_sample_dir(sample,args.out_dir,args.input_dir) #calls the method prepare-sample-dir on the sample that is currently iterating
+        prepare_sample_dir(sample,args.output_dir,args.input_dir) #calls the method prepare-sample-dir on the sample that is currently iterating
 
 
 

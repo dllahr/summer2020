@@ -27,23 +27,54 @@ class TestGenebodyCoveragePrep(unittest.TestCase):
     
     
     def test_main_sample(self):
-        #gcp.main(None)
-        pass
+        os.mkdir("main_test_input")#make a directory to hold the inputs files
+        gcp.create_samples_for_testing("sample","123","main_test_input")#read the method name
+        gcp.create_samples_for_testing("sample","456","main_test_input")#read the method name
+        gcp.create_samples_for_testing("sample","789","main_test_input")#read the method name
+        gcp.create_samples_for_testing("s1ample_","thing","main_test_input")#read the method name
+        args = gcp.build_parser().parse_args(["-o", "main_test_output", "-i", "main_test_input", "-s", "sample"])#simulate adding the commands on the command line using parser
+        gcp.main(args)
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "sample", "sample123"))))#see that the symlink is where it should be and that it exists
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "sample", "sample456"))))#see that the symlink is where it should be and that it exists
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "sample", "sample789"))))#see that the symlink is where it should be and that it exists
+        shutil.rmtree("main_test_input")#delete the directory as if it's sill there and you run the code again it will fail 
+        shutil.rmtree("main_test_output")#delete this one so there is no trace the test ran 
     
     
     
     
     def test_main_sampleFile(self):
-        pass
-   
-   
-   
+        f = open("sample_main_file_test","w")#opening the file in write mode
+        f.write("sample\ns1ample \nanothersample") #adding the start of the samples 
+        f.close()#closing the file
+        os.mkdir("main_test_input")#make a directory to hold the inputs files
+        gcp.create_samples_for_testing("sample","123","main_test_input")#read the method name
+        gcp.create_samples_for_testing("sample","456","main_test_input")#read the method name
+        gcp.create_samples_for_testing("s1ample_","thing","main_test_input")#read the method name
+        gcp.create_samples_for_testing("s1ample_","thingy","main_test_input")#read the method name
+        gcp.create_samples_for_testing("anothersample","AAAAAA","main_test_input")#read the method name
+        gcp.create_samples_for_testing("anothersample","BBBBBB","main_test_input")#read the method name
+        args = gcp.build_parser().parse_args(["-o", "main_test_output", "-i", "main_test_input", "-sf", "sample_main_file_test"])#simulate adding the commands on the command line using parser
+        gcp.main(args)
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "sample", "sample123"))))#see that the symlink is where it should be and that it exists
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "sample", "sample456"))))#see that the symlink is where it should be and that it exists
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "s1ample", "s1ample_thing"))))#see that the symlink is where it should be and that it exists
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "s1ample", "s1ample_thingy"))))#see that the symlink is where it should be and that it exists
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "anothersample", "anothersampleAAAAAA"))))#see that the symlink is where it should be and that it exists
+        self.assertTrue(os.path.islink((os.path.join("main_test_output", "anothersample", "anothersampleAAAAAA"))))#see that the symlink is where it should be and that it exists
+        shutil.rmtree("main_test_input")#delete the directory as if it's sill there and you run the code again it will fail 
+        shutil.rmtree("main_test_output")#delete this one so there is no trace the test ran 
+        os.remove("sample_main_file_test")
+
+
+
+
     def test_load_sample(self):
         f = open("load_test","w")#opening the file in write mode
-        f.write("1\n2 \n3 \n4 \n5") #adding the number 1 to the file
+        f.write("1\n2 \n3 \n4 \n5") #adding numbers to the file
         f.close()#closing the file
         sample_list = gcp.load_sample("load_test")
-        self.assertTrue(sample_list == ['1','2','3','4','5'])
+        self.assertTrue(sample_list == ['1','2','3','4','5'])#this is what the output should be, so it should be equal to the result of the method call
         os.remove("load_test")
 
 

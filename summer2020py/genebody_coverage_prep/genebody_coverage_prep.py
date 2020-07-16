@@ -46,8 +46,10 @@ def main(args):
 
 
 def load_sample(Sample_File):
-    return [] #taking in a .grp file returns a list of all the sample in that file
-
+    with open(Sample_File) as f:
+        samplelist = [line.rstrip() for line in f]
+    logger.debug("samplelist:{}".format(samplelist))
+    return samplelist
 
 
 def prepare_output_dir(output_dir_path):
@@ -93,13 +95,13 @@ def create_sample_symlink(input_file, cur_dir):
 
 
 
-def create_samples_for_testing(ending, dir):
-    name = "sample_{}".format(ending)
-    sample = os.path.join(dir, name)
+def create_samples_for_testing(start, ending, dirs):
+    name = start + ending
+    sample = os.path.join(dirs, name)
     f = open(sample,"w")#opening the file in write mode
     f.write("1") #adding the number 1 to the file
     f.close()#closing the file
-    not_sample = os.path.join(dir,ending)
+    not_sample = os.path.join(dirs,ending)
     f = open(not_sample,"w")#opening the file in write mode
     f.write("1") #adding the number 1 to the file
     f.close()#closing the file

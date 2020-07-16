@@ -77,7 +77,7 @@ def make_sample_dir(sample, out_dir):
 
 
 def find_sample_input_files(sample, input_dir):
-    cur_search = os.path.join(input_dir, "*" ) #variable cur_search is the joined paths input.dir and cur_sample plus wildcard
+    cur_search = os.path.join(input_dir,sample + "*" ) #variable cur_search is the joined paths input.dir and cur_sample plus wildcard
     logger.debug("cur_search: {}".format(cur_search))
     cur_file_list = glob.glob(cur_search) #Return a list of path names that matchcur_search and put that in cur_file_list
     cur_file_list.sort() #sort the list of path names

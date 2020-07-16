@@ -69,26 +69,25 @@ class TestGenebodyCoveragePrep(unittest.TestCase):
     def test_find_sample_input_files(self):
         input_directory = "input_test"
         test_sample ="sample"
-        shutil.rmtree(input_directory)
         os.mkdir(input_directory)
+        gcp.create_samples_for_testing("1",input_directory)
+        gcp.create_samples_for_testing("2",input_directory)
+        gcp.create_samples_for_testing("3",input_directory)
         file_list = gcp.find_sample_input_files(test_sample, input_directory)
-        gcp.create_samples_for_testing("one",input_directory)
-        gcp.create_samples_for_testing("two",input_directory)
-        gcp.create_samples_for_testing("three",input_directory)
         self.assertTrue(file_list)
+        shutil.rmtree(input_directory)
 
         
     def test_create_sample_symlink(self):
-        # test_directory = "testing"
-        # test_sample = "sample"
-        # input_directory = "input_test"
-        # gcp.prepare_output_dir(test_directory)
-        # new_dir = gcp.make_sample_dir(test_sample, test_directory)
-        # file_list = gcp.find_sample_input_files(test_sample, input_directory)
-        # for input_file in file_list:
-        #     gcp.create_sample_symlink(input_file, new_dir)
-        #     #something to confrim it works
-        pass
+        test_directory = "testing"
+        test_sample = "sample"
+        input_directory = "input_test"
+        gcp.prepare_output_dir(test_directory)
+        new_dir = gcp.make_sample_dir(test_sample, test_directory)
+        file_list = gcp.find_sample_input_files(test_sample, input_directory)
+        for input_file in file_list:
+            gcp.create_sample_symlink(input_file, new_dir)
+            #something to confrim it works
 
 
 

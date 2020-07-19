@@ -1,9 +1,11 @@
 import unittest
 import logging
-import summer2020py.setup_logger as setup_logger
-import summer2020py.genebody_coverage_prep.genebody_coverage_prep as gcp
+import fhtbioinfpy.setup_logger as setup_logger
+import fhtbioinfpy.genebody_coverage_prep.genebody_coverage_prep as gcp
 import os
 import shutil
+import tempfile
+
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
@@ -19,6 +21,9 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 #        self.assertEqual(str(context.exception), "expected exception message")
 #
 #        self.assertAlmostEquals(...) for comparing floats
+
+
+temp_wkdir_prefix = "test_genebody_coverage_prep"
 
 
 def create_samples_for_testing(start, ending, dirs):
@@ -93,18 +98,34 @@ class TestGenebodyCoveragePrep(unittest.TestCase):
         shutil.rmtree(test_dir)
 
     def test_prepare_output_dir(self):
-        test_directory = "testing"
-        self.assertFalse(os.path.exists(test_directory))
-        gcp.prepare_output_dir(test_directory)
-        self.assertTrue(os.path.exists(test_directory))  #making sure that the output directory was created
-        test_file = os.path.join(test_directory, "test_file") #adding a file to that directory 
-        f = open(test_file,"w")#opening the file in write mode
-        f.write("1") #adding the number 1 to the file
-        f.close()#closing the file
-        gcp.prepare_output_dir(test_directory)
-        self.assertTrue(os.path.exists(test_directory)) #making sure that the output directory was created
-        self.assertFalse(os.path.exists(test_file))#making sure that this is a new directory and not the old one that had a file in it
-        shutil.rmtree(test_directory)#delete the test directory
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("test_prepare_output_dir wkdir:  {}".format(wkdir))
+
+            test_directory = os.path.join(wkdir, "output")
+            logger.debug("test_directory:  {}".format(test_directory))
+            self.assertFalse(os.path.exists(test_directory))
+
+            # run prepare_output_dir method
+            my_symlinks, my_calcs = gcp.prepare_output_dir(test_directory, "my_symlinks", "my_calcs")
+            logger.debug("results my_symlinks:  {}".format(my_symlinks))
+            logger.debug("my_calcs:  {}".format(my_calcs))
+
+            self.assertEqual(os.path.join(test_directory, "my_symlinks"), my_symlinks)
+            self.assertEqual(os.path.join(test_directory, "my_calcs"), my_calcs)
+
+            # test that the output directories were created
+            self.assertTrue(os.path.exists(test_directory))  
+            self.assertTrue(os.path.exists(my_symlinks))
+            self.assertTrue(os.path.exists(my_calcs))
+
+            logger.debug("test that if we run the method and the directory exists, it is cleared out")
+            test_file = os.path.join(test_directory, "test_file") #adding a file to that directory 
+            f = open(test_file,"w")#opening the file in write mode
+            f.write("1") #adding the number 1 to the file
+            f.close()#closing the file
+            gcp.prepare_output_dir(test_directory, "my_symlinks", "my_calcs")
+            self.assertTrue(os.path.exists(test_directory)) #making sure that the output directory was created
+            self.assertFalse(os.path.exists(test_file))#making sure that this is a new directory and not the old one that had a file in it
    
     def test_make_sample_dir(self):
         test_directory = "testing"
@@ -127,10 +148,12 @@ class TestGenebodyCoveragePrep(unittest.TestCase):
         shutil.rmtree(input_directory)
 
     def test_create_sample_symlink(self):
-        test_directory = "symtesting"
+        super_test_directory = "symtesting"
         test_sample = "symsample"
         input_directory = "inputs"
-        gcp.prepare_output_dir(test_directory)#create a test directory to hold everything that will be created
+
+        test_directory, _ = gcp.prepare_output_dir(super_test_directory, "test_symlinks_dir", "test_calc_dir")#create a test directory to hold everything that will be created
+
         new_dir = gcp.make_sample_dir(test_sample, test_directory)#create a directory to hold the output
         os.mkdir(input_directory) #creating a directory to hold the inputs
         create_samples_for_testing("sample", "1",input_directory) #creating two files in input_directory sample1 and 1
@@ -150,7 +173,21 @@ class TestGenebodyCoveragePrep(unittest.TestCase):
         self.assertTrue(os.path.islink((os.path.join(test_directory, test_sample, "anothersamplejuly_17"))))
         #deleting the directory so that there are no files left over from this running 
         shutil.rmtree(input_directory)
-        shutil.rmtree(test_directory)
+        shutil.rmtree(super_test_directory)
+
+    def test_prepare_sample_symlinks_dir(self):
+        pass
+        # TODO write this test
+
+    def test_prepare_sample_output_calc_dir(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("test_prepare_sample_output_calc_dir wkdir:  {}".format(wkdir))
+
+            r = gcp.prepare_sample_output_calc_dir("my_sample13", wkdir)
+            logger.debug("r:  {}".format(r))
+            self.assertEqual(os.path.join(wkdir, "my_sample13"), r)
+
+            self.assertTrue(os.path.exists(r))
 
 
 if __name__ == "__main__":

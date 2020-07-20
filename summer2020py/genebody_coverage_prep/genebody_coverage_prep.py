@@ -1,6 +1,6 @@
 import logging
-import fhtbioinfpy
-import fhtbioinfpy.setup_logger as setup_logger
+import summer2020py
+import summer2020py.setup_logger as setup_logger
 import argparse
 import sys
 import os
@@ -27,9 +27,9 @@ def build_parser():
         type=str, default="output_gbdy_cov")
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
-        type=str, default=fhtbioinfpy.default_config_filepath)
+        type=str, default=summer2020py.default_config_filepath)
     parser.add_argument("--config_section", help="section of config file to use for information about how to connect to CDD API, ArxLab API etc.",
-        type=str, default=fhtbioinfpy.default_config_section)
+        type=str, default=summer2020py.default_config_section)
     return parser
 
 

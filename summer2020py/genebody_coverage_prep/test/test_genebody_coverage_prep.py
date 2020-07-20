@@ -260,9 +260,6 @@ class TestGenebodyCoveragePrep(unittest.TestCase):
             self.assertTrue(os.path.islink((os.path.join(output_symlinks_dir, samplename, "my_samples2"))))
             self.assertTrue(os.path.islink((os.path.join(output_symlinks_dir, samplename, "my_samples3"))))
 
-            #delete the test directories
-            shutil.rmtree(inputs)
-            shutil.rmtree(output_dir)
         
 
     def test_prepare_sample_output_calc_dir(self):

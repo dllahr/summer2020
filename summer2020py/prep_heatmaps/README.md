@@ -31,27 +31,26 @@ url_template is a template for the urls that will be created
 
 output_html_link_file it a html file that will store html stuff (don't know at the moment of writing this)
 
-*prepare output directory* 
+**prepare output directory**
 if the path that you want to put the outputs at alread exists, delete it then make it
 if the path that you want to put the outputs doesn't exists, make it
 
-*find DGE data file as pandas dataframe*
+**find DGE data file as pandas dataframe**
 save to dge_file_list all the files in the source_dir direcotry dge_data that start with the expirment id
 and then _*_DGE_r*.txt where * is the wildcard symbol meaning anything can go there
 
-*read DGE data file as pandas dataframe*
+**read DGE data file as pandas dataframe**
 take all the files read them, and then display then in a table
 	have to understand this
 
-*prepare heatmap GCToo object with data and metadata*
+**prepare heatmap GCToo object with data and metadata**
 do thing to prepare data, will look more deeply into how this is done soon
 
-*write heatmap GCToo objects to files in heatmap_dir*
+**write heatmap GCToo objects to files in heatmap_dir**
 	do thing, really need to understand tables in python more
 
-*prepare links to interactive heatmaps in html file*
+**prepare links to interactive heatmaps in html file**
 	what is sounds like this is where the url_template is used, all the url are added to a list
-
 	then output_html_link_file has the list 
 
 

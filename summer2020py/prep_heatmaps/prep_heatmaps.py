@@ -9,7 +9,7 @@ import glob
 import pandas
 import cmapPy.pandasGEXpress.GCToo as GCToo
 import cmapPy.pandasGEXpress.write_gct as write_gct
-from IPython.display import display
+
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
@@ -19,10 +19,13 @@ def build_parser():
     parser.add_argument("--verbose", "-v", help="Whether to print a bunch of output.", action="store_true", default=False)
     parser.add_argument("--hostname", help="lims db host name", type=str, default="getafix-v")
 
-    parser.add_argument("--sourcedir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", required = True )
-    parser.add_argument("--expirmentid", "-e", help = "id of the expirment", required = True)
-    parser.add_argument("--dgestatsforheatmaps", "-d", help = "dge stats for heatmaps", required = True)
-
+    parser.add_argument("--sourcedir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", type = str, required = True )
+    parser.add_argument("--expirmentid", "-e", help = "id of the expirment", type = str, required = True)
+    
+    parser.add_argument("--dgestatsforheatmaps", "-d", help = "dge stats for heatmaps",type = str,  default = ["logFC", "t"])
+    parser.add_argument("--basedatapath", "-b", help = "path to directory with experiment id in it", type = str, default = "/data/experiments/RNA_SEQ/")
+    parser.add_argument("--relativepath", "-r", help = "path from experiment id to where you want the heatmaps", type = str, default = "/analysis/heatmaps/")
+    parser.add_argument("--server", "-s", help = "server for the heatmaps to be put onto", type = str, default = "http://fht.samba.data/fht_morpheus.html?gctData=")
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
         type=str, default=summer2020py.default_config_filepath)
@@ -54,10 +57,14 @@ def  find_DGE_files(source_dir, experiment_id):
     dge_file_list = glob.glob(
     os.path.join(source_dir, "dge_data", experiment_id + "_*_DGE_r*.txt")
     )
+    #set equa to dge_file_list all the files in source dir, in dge_data that start with the experiment id and end with _*_DGE_r*.txt where * is wildcard
 
     dge_file_list.sort()
+    #sort the file list
+
     logger.debug(len(dge_file_list))
     logger.debug("\n".join(dge_file_list))
+
     return(dge_file_list)
 
 def read_DGE_files(dge_file_list):
@@ -66,10 +73,20 @@ def read_DGE_files(dge_file_list):
     os.path.basename(dge_file))
     for dge_file in dge_file_list
     ]
+    #this is a list comprehension, it is the same as the code in the comment below
+        # for dge_file in dge_file_list
+            #dge_df_list.append(pandas.read_csv(dge_file, sep="\t", index_col=0),os.path.basename(dge_file))
+    
     logger.debug([x[0].shape for x in dge_df_list])
+    #another list comprhension this one is the same as this
+        #for x in dge_df_list
+            #[x[0]].shape
+    
+    #print out the name and data frame head of each tuple in list
     for dge_df, dge_file in dge_df_list:
         logger.debug(dge_file)
-        display(dge_df.head())
+        logger.debug(dge_df.head())
+    
     return dge_df_list
 
 def prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
@@ -97,13 +114,13 @@ def prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
         
         combined_df = pandas.concat(extract_df_list, axis=1)
         logger.debug(combined_df.shape)
-        display(combined_df.head())
+        logger.debug(combined_df.head())
         
         col_metadata_df = pandas.DataFrame(col_metadata_dict).T
         col_metadata_df = col_metadata_df.loc[combined_df.columns]
         col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
         col_metadata_df["dge_statistic"] = dge_stat
-        display(col_metadata_df)
+        logger.debug(col_metadata_df)
 
         heatmap_g = GCToo.GCToo(combined_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df)
         logger.debug(heatmap_g)
@@ -121,7 +138,7 @@ def write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
         heatmap_g.src = output_filename
     
         output_filepath = os.path.join(heatmap_dir, output_filename)
-        logger.debug("output_filepath: {}}".format(output_filepath))
+        logger.debug("output_filepath: {}".format(output_filepath))
     
         write_gct.write(heatmap_g, output_filepath)
 
@@ -170,11 +187,11 @@ def main(args):
     logger.debug(output_template)
     #the output template that will be used later 
 
-    base_data_path = "/data/experiments/RNA_SEQ/{exp_id}/analysis/heatmaps/".format(exp_id= args.experimentid)
+    base_data_path = "{base_path}{exp_id}{relative_path}".format(base_path = args.basedatapath, exp_id= args.experimentid, relative_path = args.relativepath)
     logger.debug(base_data_path)
     #where the data is 
 
-    url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
+    url_template = "{server}{data_path}".format(server = args.server)
     logger.debug(url_template)
     #template for the urls that will be used later
 

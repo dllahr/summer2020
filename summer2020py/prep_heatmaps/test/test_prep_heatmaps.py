@@ -4,6 +4,11 @@ import summer2020py.setup_logger as setup_logger
 import summer2020py.prep_heatmaps.prep_heatmaps as ph
 import tempfile
 import os
+import shutil
+import glob
+import pandas
+import cmapPy.pandasGEXpress.GCToo as GCToo
+import cmapPy.pandasGEXpress.write_gct as write_gct
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
@@ -25,8 +30,9 @@ def create_file_for_testing(name, dirs):
     
     files = os.path.join(dirs, name)
     f = open(files,"w")#opening the file in write mode
-    f.write("1") #adding the number 1 to the file
+    f.write("numbers\tword\tcaps\n1\tone\tONE\n2\ttwo\tTWO") #adding some stuff to the file
     f.close()#closing the file
+    return files
    
     
 
@@ -80,12 +86,29 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
 
             #assert that the list has what you want in it
             self.assertTrue(len(dge_file_list) == 2)
+    
+    def test_read_DGE_files(self):
+        #test can be improved, right now it only test when there is one thing in dge_file_list, which while it shows
+        #that the methods works the are ways that this test could pass but the code isn't working correctly 
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("test_read_DGE_files:  {}".format(wkdir))
+            #creating file and a list to pass into read DGE_files
+            onetwo = create_file_for_testing("onetwo", wkdir)
+            dge_file_list = [onetwo]
 
+            dge_df_list = ph.read_DGE_files(dge_file_list)
+            
+            for dge_df, dge_file in dge_df_list:
+                    self.assertEqual(dge_file, os.path.basename(onetwo))
+                    self.assertEqual(dge_df.at[1, "word"], "one")
+                  
+                    
             
         
 
 
 if __name__ == "__main__":
     setup_logger.setup(verbose=True)
-
+    
     unittest.main()
+    

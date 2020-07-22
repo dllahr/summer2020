@@ -32,14 +32,7 @@ def build_parser():
     parser.add_argument("--config_section", help="section of config file to use for information about how to connect to CDD API, ArxLab API etc.",
         type=str, default=summer2020py.default_config_section)
 
-    parser.add_argument("--queue_choice", "-qc", help="which of the queues to work on - valid values are roast, brew, both", type=str,
-        choices=["roast", "brew", "both"], default="both")
-    parser.add_argument("--add_to_queue", "-a", help="add the det_plate entries to the roast_queue", type=str, nargs="+", default=None)
-    # To make --option1 and --option2 mutually exclusive, one can define mutually_exclusive_group in argparse,
-    # argparse asserts that the options added to the group are not used at the same time and throws exception if otherwise
-    mutually_exclusive_group = parser.add_mutually_exclusive_group()
-    mutually_exclusive_group.add_argument("--option1", action="store", dest="option1", help="provide argument for option1", default=None)
-    mutually_exclusive_group.add_argument("--option2", action="store", dest="option2", help="provide argument for option2", default=None)
+    
     return parser
 
 

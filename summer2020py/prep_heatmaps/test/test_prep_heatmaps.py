@@ -21,6 +21,15 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 #        self.assertAlmostEquals(...) for comparing floats
 
 temp_wkdir_prefix = "test_prep_heatmaps"
+def create_file_for_testing(name, dirs):
+    
+    files = os.path.join(dirs, name)
+    f = open(files,"w")#opening the file in write mode
+    f.write("1") #adding the number 1 to the file
+    f.close()#closing the file
+   
+    
+
 
 class TestGeneralPythonScriptTemplate(unittest.TestCase):
     def test_main(self):
@@ -45,7 +54,35 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
             ph.prepare_output_dir(wkdir)
             self.assertTrue(os.path.exists(heatmaps)) #making sure that the output directory was created
             self.assertFalse(os.path.exists(test_file))#making sure that this is a new directory and not the old one that had a file in it
-   
+    
+    
+    def test_find_DGE_files(self):
+         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("test_find_DGE_files:  {}".format(wkdir))
+            
+            #saving the test versions of source_dir and test_id to variables and also creating a test id that won't be tested
+            source_dir = os.path.join(wkdir,"source_test")
+            test_id ="124rqtga"
+            notthistest_id = "rnauasf"
+            dge_data_test = os.path.join(source_dir, "dge_data")
+
+            #creating directories
+            os.mkdir(source_dir)
+            os.mkdir(dge_data_test)
+
+            #creating files for the method to find and put into a list
+            create_file_for_testing((test_id + "_one_DGE_rtwo.txt"),dge_data_test)
+            create_file_for_testing((test_id + "_three_DGE_rtwo.txt"),dge_data_test)
+            create_file_for_testing((notthistest_id + "_one_DGE_rtwo.txt"),dge_data_test)
+            
+            #running the method
+            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+
+            #assert that the list has what you want in it
+            self.assertTrue(len(dge_file_list) == 2)
+
+            
+        
 
 
 if __name__ == "__main__":

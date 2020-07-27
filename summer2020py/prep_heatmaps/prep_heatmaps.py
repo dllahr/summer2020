@@ -55,8 +55,8 @@ def  find_DGE_files(source_dir, experiment_id):
     dge_file_list.sort()
     #sort the file list
 
-    logger.debug(len(dge_file_list))
-    logger.debug("\n".join(dge_file_list))
+    logger.debug("len(dge_file_list): {}".format(len(dge_file_list)))
+    logger.debug("dge_file_list\n{}".format(dge_file_list))
 
     return(dge_file_list)
 
@@ -77,8 +77,8 @@ def read_DGE_files(dge_file_list):
     
     #print out the name and data frame head of each tuple in list
     for dge_df, dge_file in dge_df_list:
-        logger.debug(dge_file)
-        logger.debug("\n{}".format(dge_df.head()))
+        logger.debug("dge_file: {}".format(dge_file))
+        logger.debug("dge_df.head()\n{}".format(dge_df.head()))
     
     return dge_df_list
 
@@ -95,7 +95,7 @@ def prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
             basename = os.path.splitext(dge_file)[0]
             annotation_values = basename.split("_")
             annotation_str = "_".join(annotation_values[1:-2])
-            logger.debug(annotation_str)
+            logger.debug("annotation_str: {}".format(annotation_str))
             
             
             extract_df = dge_df[[dge_stat]]
@@ -107,20 +107,20 @@ def prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
             col_metadata_dict[col_id] = annotation_values
         
         combined_df = pandas.concat(extract_df_list, axis=1)
-        logger.debug(combined_df.shape)
-        logger.debug("\n{}".format(combined_df.head()))
+        logger.debug("combined_df.shape: {}".format(combined_df.shape))
+        logger.debug("combined_df.head()\n{}".format(combined_df.head()))
         
         col_metadata_df = pandas.DataFrame(col_metadata_dict).T
         col_metadata_df = col_metadata_df.loc[combined_df.columns]
         col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
         col_metadata_df["dge_statistic"] = dge_stat
-        logger.debug(col_metadata_df)
+        logger.debug("col_metadata_df: {}".format(col_metadata_df))
 
         heatmap_g = GCToo.GCToo(combined_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df)
-        logger.debug(heatmap_g)
+        logger.debug("heatmap_g: {}".format(heatmap_g))
         heatmap_gct_list.append((dge_stat, heatmap_g))
 
-    logger.debug(len(heatmap_gct_list))
+    logger.debug("len(heatmap_gct_list): {}".format(len(heatmap_gct_list)))
     logger.debug([(dge_stat, heat_g.data_df.shape) for dge_stat, heat_g in heatmap_gct_list])
     return heatmap_gct_list
 
@@ -141,13 +141,13 @@ def prepare_links(heatmap_gct_list, url_template, base_data_path):
 
     for dge_stat, heatmap_g in heatmap_gct_list:
         data_path = os.path.join(base_data_path, heatmap_g.src)
-        logger.debug(data_path)
+        logger.debug("data_path: {}".format(data_path))
     
         cur_url = url_template.format(data_path=data_path)
-        logger.debug(cur_url)
+        logger.debug("cur_url: {}".format(cur_url))
     
         url_list.append((dge_stat, cur_url))
-    logger.debug(len(url_list))
+    logger.debug("url_list: {}"(len(url_list)))
     return url_list
 
 def write_to_html(heatmap_dir, output_html_link_file, url_list, experiment_id):
@@ -178,7 +178,7 @@ def write_to_html(heatmap_dir, output_html_link_file, url_list, experiment_id):
 
 def main(args):
     output_template = args.experimentid + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
-    logger.debug(output_template)
+    logger.debug("output_template{}".format(output_template))
     #the output template that will be used later 
 
     base_data_path = "{base_path}{exp_id}{relative_path}".format(base_path = args.basedatapath, exp_id= args.experimentid, relative_path = args.relativepath)
@@ -186,11 +186,11 @@ def main(args):
     #where the data is 
 
     url_template = "{server}{data_path}".format(server = args.server)
-    logger.debug(url_template)
+    logger.debug("url_template: {}".format(url_template))
     #template for the urls that will be used later
 
     output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id= args.experimentid)
-    logger.debug(output_html_link_file)
+    logger.debug("output_html_link_file: {}".format(output_html_link_file))
     #the file name of the html file that will have all the urls for the heatmaps
 
     heatmap_dir = prepare_output_dir(args.source_dir)

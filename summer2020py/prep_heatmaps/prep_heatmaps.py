@@ -147,7 +147,7 @@ def prepare_links(heatmap_gct_list, url_template, base_data_path):
         logger.debug("cur_url: {}".format(cur_url))
     
         url_list.append((dge_stat, cur_url))
-    logger.debug("url_list: {}"(len(url_list)))
+    logger.debug(len(url_list))
     return url_list
 
 def write_to_html(heatmap_dir, output_html_link_file, url_list, experiment_id):

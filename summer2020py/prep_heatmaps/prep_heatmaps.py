@@ -78,7 +78,7 @@ def read_DGE_files(dge_file_list):
     #print out the name and data frame head of each tuple in list
     for dge_df, dge_file in dge_df_list:
         logger.debug(dge_file)
-        logger.debug(dge_df.head())
+        logger.debug("\n{}".format(dge_df.head()))
     
     return dge_df_list
 
@@ -97,6 +97,7 @@ def prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
             annotation_str = "_".join(annotation_values[1:-2])
             logger.debug(annotation_str)
             
+            
             extract_df = dge_df[[dge_stat]]
             col_id  = dge_stat + "_" + annotation_str
             extract_df.columns = [col_id]
@@ -107,7 +108,7 @@ def prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
         
         combined_df = pandas.concat(extract_df_list, axis=1)
         logger.debug(combined_df.shape)
-        logger.debug(combined_df.head())
+        logger.debug("\n{}".format(combined_df.head()))
         
         col_metadata_df = pandas.DataFrame(col_metadata_dict).T
         col_metadata_df = col_metadata_df.loc[combined_df.columns]

@@ -57,7 +57,39 @@ def random_of_input_file(name, dirs):
 
 class TestGeneralPythonScriptTemplate(unittest.TestCase):
     def test_main(self):
-        pass
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("test_prepare_output_dir wkdir:  {}".format(wkdir))
+            test_id = "H202SC20040591"
+            base_path = wkdir
+            relative_path = "heatmaps"
+            server = "http://fht.samba.data/fht_morpheus.html?gctData="
+            source_dir = os.path.join(wkdir,"source_test")
+            dgestatsforheatmaps = ["logFC", "t"]
+            dge_data_test = os.path.join(source_dir, "dge_data")
+
+            #creating directories
+            os.mkdir(source_dir)
+            os.mkdir(dge_data_test)  
+
+            #making directories so that base_data_path won't throw an error when called
+            os.mkdir(os.path.join(wkdir, test_id))
+            os.mkdir(os.path.join(wkdir, test_id, relative_path))     
+            
+            #adding some samples
+            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+        
+            #simulate adding the commands on the command line using parser
+            args = ph.build_parser().parse_args(["-s", source_dir, "-e", test_id, "-d", dgestatsforheatmaps, "-b", 
+            base_path, "-r", relative_path, "-se", server])
+        
+
+            ph.main(args)
+
+            #test to see that it worked
+
+
+
     def test_prepare_output_dir(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("test_prepare_output_dir wkdir:  {}".format(wkdir))
@@ -210,19 +242,25 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
 
             heatmap_gct_list = ph.prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
             
-            base_data_path = "assets"
+            heatmap_dir = source_dir
+
+            #should not be this, will fix later
+            base_data_path = wkdir
+
+            output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
 
             url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
+
+            ph.write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
 
             ph.prepare_links(heatmap_gct_list, url_template, base_data_path)
 
             #run a test to see that it worked
     
 
-    def write_to_html(self):
+    def test_write_to_html(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("test_write_to_html:  {}".format(wkdir))
-        #creating file and a list to pass into read DGE_files
+            #creating file and a list to pass into read DGE_files
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
@@ -242,9 +280,15 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
 
             heatmap_gct_list = ph.prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
             
-            base_data_path = "assets"
+            heatmap_dir = source_dir
+
+            base_data_path = wkdir
+
+            output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
 
             url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
+
+            ph.write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
 
             url_list = ph.prepare_links(heatmap_gct_list, url_template, base_data_path)
 

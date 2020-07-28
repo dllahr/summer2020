@@ -20,12 +20,12 @@ def build_parser():
     parser.add_argument("--hostname", help="lims db host name", type=str, default="getafix-v")
 
     parser.add_argument("--sourcedir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", type = str, required = True )
-    parser.add_argument("--expirmentid", "-e", help = "id of the expirment", type = str, required = True)
+    parser.add_argument("--experimentid", "-e", help = "id of the expirment", type = str, required = True)
     
-    parser.add_argument("--dgestatsforheatmaps", "-d", help = "dge stats for heatmaps",type = str,  default = ["logFC", "t"])
+    parser.add_argument("--dgestatsforheatmaps", "-d", help = "dge stats for heatmaps",  default = ["logFC", "t"])
     parser.add_argument("--basedatapath", "-b", help = "path to directory with experiment id in it", type = str, default = "/data/experiments/RNA_SEQ/")
     parser.add_argument("--relativepath", "-r", help = "path from experiment id to where you want the heatmaps", type = str, default = "/analysis/heatmaps/")
-    parser.add_argument("--server", "-s", help = "server for the heatmaps to be put onto", type = str, default = "http://fht.samba.data/fht_morpheus.html?gctData=")
+    parser.add_argument("--server", "-se", help = "server for the heatmaps to be put onto", type = str, default = "http://fht.samba.data/fht_morpheus.html?gctData=")
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
         type=str, default=summer2020py.default_config_filepath)
@@ -185,18 +185,18 @@ def main(args):
     logger.debug(base_data_path)
     #where the data is 
 
-    url_template = "{server}{data_path}".format(server = args.server)
+    url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
     logger.debug("url_template: {}".format(url_template))
     #template for the urls that will be used later
 
-    output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id= args.experimentid)
+    output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id=args.experimentid)
     logger.debug("output_html_link_file: {}".format(output_html_link_file))
     #the file name of the html file that will have all the urls for the heatmaps
 
-    heatmap_dir = prepare_output_dir(args.source_dir)
+    heatmap_dir = prepare_output_dir(args.sourcedir)
     #prpare the output directory 
 
-    dge_file_list = find_DGE_files(args.source_dir, args.experimentid)
+    dge_file_list = find_DGE_files(args.sourcedir, args.experimentid)
     #finding the DGE files and saving them to dge file list
 
     dge_df_list = read_DGE_files(dge_file_list)

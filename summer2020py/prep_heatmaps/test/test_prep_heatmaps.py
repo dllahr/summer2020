@@ -58,7 +58,7 @@ def random_of_input_file(name, dirs):
 class TestGeneralPythonScriptTemplate(unittest.TestCase):
     def test_main(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("test_prepare_output_dir wkdir:  {}".format(wkdir))
+            logger.debug("\n \n \n test_main:  {}\n \n ".format(wkdir))
             test_id = "H202SC20040591"
             base_path = wkdir
             relative_path = "heatmaps"
@@ -86,13 +86,13 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
 
             ph.main(args)
 
-            #test to see that it worked
+            #whatever way I tested write_to_html will go here modifed to work here
 
 
 
     def test_prepare_output_dir(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("test_prepare_output_dir wkdir:  {}".format(wkdir))
+            logger.debug("\n \n \n test_prepare_output_dir wkdir:  {}\n \n ".format(wkdir))
 
             heatmaps = os.path.join(wkdir, "heatmaps")
             # run prepare_output_dir method
@@ -114,7 +114,7 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
     
     def test_find_DGE_files(self):
          with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("test_find_DGE_files:  {}".format(wkdir))
+            logger.debug("\n \n \n test_find_DGE_files:  {}\n \n ".format(wkdir))
             
             #saving the test versions of source_dir and test_id to variables and also creating a test id that won't be tested
             source_dir = os.path.join(wkdir,"source_test")
@@ -141,7 +141,7 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
         #test can be improved, right now it only test when there is one thing in dge_file_list, which while it shows
         #that the methods works the are ways that this test could pass but the code isn't working correctly 
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("test_read_DGE_files:  {}".format(wkdir))
+            logger.debug("\n \n \n test_read_DGE_files:  {}\n \n ".format(wkdir))
             #creating testod and paths of the directories
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
@@ -158,15 +158,17 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
 
             dge_df_list = ph.read_DGE_files(dge_file_list)
             
-            
-            self.assertTrue(len(dge_df_list)==2)
+            i = 0
+            for dge_df, dge_file in dge_df_list:
+                self.assertTrue(dge_df.equals(pandas.read_csv(dge_file_list[i], sep="\t", index_col=0))) 
+                i += 1
                     
 
     def test_prepare_GCToo_objects(self):
         #test can be improved, right now it only test when there is one thing in dge_file_list, which while it shows
         #that the methods works the are ways that this test could pass but the code isn't working correctly 
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("test_read_DGE_files:  {}".format(wkdir))
+            logger.debug("\n \n \n test_read_DGE_files:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
@@ -186,9 +188,13 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
 
             heatmap_gct_list = ph.prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
 
+            self.assertEqual(len(heatmap_gct_list), 2)
+
+            #can't think of a way to test this without having the code from the method
+
     def test_write_GCToo_objects_to_files(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("test_write_GCToo_objects_to_files:  {}".format(wkdir))
+            logger.debug("\n \n \n test_write_GCToo_objects_to_files:  {}\n \n ".format(wkdir))
             
             #creating file and a list to pass into read DGE_files
             test_id ="H202SC20040591"
@@ -215,13 +221,13 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
 
             ph.write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
 
-            #run a test to see if it worked 
+            #can't think of a way to test this without having the code from the method
 
 
     def test_prepare_links(self):
         
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("test_prepare_links:  {}".format(wkdir))
+            logger.debug("\n \n \n test_prepare_links:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
@@ -253,14 +259,24 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
 
             ph.write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
 
-            ph.prepare_links(heatmap_gct_list, url_template, base_data_path)
+            url_list = ph.prepare_links(heatmap_gct_list, url_template, base_data_path)
 
-            #run a test to see that it worked
+            i = 0
+            for dge_stat, heatmap_g in heatmap_gct_list:
+                data_path = os.path.join(base_data_path, heatmap_g.src)
+                cur_url = url_template.format(data_path=data_path)
+                self.assertTrue(url_list[i] == (dge_stat, cur_url))
+                i += 1
+
+
+            
     
 
     def test_write_to_html(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_write_to_html:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
+
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
@@ -296,7 +312,7 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
             
             ph.write_to_html(source_dir, output_html_link_file, url_list, test_id)
 
-            #test to make sure it worked
+            #can't think of a way to test this without having the code from the method
 
 
 

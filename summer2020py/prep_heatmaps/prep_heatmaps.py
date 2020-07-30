@@ -82,47 +82,52 @@ def read_DGE_files(dge_file_list):
     
     return dge_df_list
 
-def prepare_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
+def prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
     heatmap_gct_list = []
 
     # for dge_df in dge_df_list:
     for dge_stat in dge_stats_for_heatmaps:
-        row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
         
-        col_metadata_dict = {}
-        extract_df_list = []
-        for dge_df, dge_file in dge_df_list:
-            basename = os.path.splitext(dge_file)[0]
-            annotation_values = basename.split("_")
-            annotation_str = "_".join(annotation_values[1:-2])
-            logger.debug("annotation_str: {}".format(annotation_str))
-            
-            
-            extract_df = dge_df[[dge_stat]]
-            col_id  = dge_stat + "_" + annotation_str
-            extract_df.columns = [col_id]
-            #display(extract_df.head())
-            extract_df_list.append(extract_df)
-        
-            col_metadata_dict[col_id] = annotation_values
-        
-        combined_df = pandas.concat(extract_df_list, axis=1)
-        logger.debug("combined_df.shape: {}".format(combined_df.shape))
-        logger.debug("combined_df.head()\n{}".format(combined_df.head()))
-        
-        col_metadata_df = pandas.DataFrame(col_metadata_dict).T
-        col_metadata_df = col_metadata_df.loc[combined_df.columns]
-        col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
-        col_metadata_df["dge_statistic"] = dge_stat
-        logger.debug("col_metadata_df: {}".format(col_metadata_df))
+        heatmap_g = prepare_GCToo_object(dge_stat, dge_df_list)
 
-        heatmap_g = GCToo.GCToo(combined_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df)
-        logger.debug("heatmap_g: {}".format(heatmap_g))
         heatmap_gct_list.append((dge_stat, heatmap_g))
 
     logger.debug("len(heatmap_gct_list): {}".format(len(heatmap_gct_list)))
     logger.debug([(dge_stat, heat_g.data_df.shape) for dge_stat, heat_g in heatmap_gct_list])
     return heatmap_gct_list
+
+
+def prepare_GCToo_object(dge_stat, dge_df_list):
+    row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
+    col_metadata_dict = {}
+    extract_df_list = []
+    for dge_df, dge_file in dge_df_list:
+        basename = os.path.splitext(dge_file)[0]
+        annotation_values = basename.split("_")
+        annotation_str = "_".join(annotation_values[1:-2])
+        logger.debug("annotation_str: {}".format(annotation_str))
+            
+            
+        extract_df = dge_df[[dge_stat]]
+        col_id  = dge_stat + "_" + annotation_str
+        extract_df.columns = [col_id]
+        #display(extract_df.head())
+        extract_df_list.append(extract_df)
+        col_metadata_dict[col_id] = annotation_values
+
+    combined_df = pandas.concat(extract_df_list, axis=1)
+    logger.debug("combined_df.shape: {}".format(combined_df.shape))
+    logger.debug("combined_df.head()\n{}".format(combined_df.head()))
+        
+    col_metadata_df = pandas.DataFrame(col_metadata_dict).T
+    col_metadata_df = col_metadata_df.loc[combined_df.columns]
+    col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
+    col_metadata_df["dge_statistic"] = dge_stat
+    logger.debug("col_metadata_df: {}".format(col_metadata_df))
+
+    heatmap_g = GCToo.GCToo(combined_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df)
+    logger.debug("heatmap_g: {}".format(heatmap_g))
+    return heatmap_g
 
 def write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir):
     for dge_stat, heatmap_g in heatmap_gct_list:
@@ -158,6 +163,9 @@ def write_to_html(heatmap_dir, output_html_link_file, url_list, experiment_id):
     a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
     """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]
 
+    write_html_to_file(a_lines, experiment_id, html_filepath)
+
+def write_html_to_file(a_lines, experiment_id, html_filepath):
     html = ("""<html>
     <body>
     <h1>{exp_id} links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
@@ -174,7 +182,6 @@ def write_to_html(heatmap_dir, output_html_link_file, url_list, experiment_id):
     f = open(html_filepath, "w")
     f.write(html)
     f.close()
-
 
 def main(args):
     output_template = args.experimentid + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
@@ -202,7 +209,7 @@ def main(args):
     dge_df_list = read_DGE_files(dge_file_list)
     #reading the DGE files and returning a list with the data instead of a list with csv in it
 
-    heatmap_gct_list = prepare_GCToo_objects(args.dgestatsforheatmaps, dge_df_list)
+    heatmap_gct_list = prepare_all_GCToo_objects(args.dgestatsforheatmaps, dge_df_list)
     #prpare GCToo objects
 
     write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)

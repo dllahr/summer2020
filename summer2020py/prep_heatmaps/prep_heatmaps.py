@@ -97,10 +97,10 @@ def prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
     return heatmap_gct_list
 
 
-def prepare_GCToo_object(dge_stat, dge_df_list):
-    row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
-    col_metadata_dict = {}
+def prepare_data_df(dge_stat, dge_df_list):
+    #col_metadata_dict = {}
     extract_df_list = []
+    
     for dge_df, dge_file in dge_df_list:
         basename = os.path.splitext(dge_file)[0]
         annotation_values = basename.split("_")
@@ -113,19 +113,33 @@ def prepare_GCToo_object(dge_stat, dge_df_list):
         extract_df.columns = [col_id]
         #display(extract_df.head())
         extract_df_list.append(extract_df)
-        col_metadata_dict[col_id] = annotation_values
+        #col_metadata_dict[col_id] = annotation_values
 
-    combined_df = pandas.concat(extract_df_list, axis=1)
-    logger.debug("combined_df.shape: {}".format(combined_df.shape))
-    logger.debug("combined_df.head()\n{}".format(combined_df.head()))
-        
-    col_metadata_df = pandas.DataFrame(col_metadata_dict).T
-    col_metadata_df = col_metadata_df.loc[combined_df.columns]
+    data_df = pandas.concat(extract_df_list, axis=1)
+    logger.debug("data_df.shape: {}".format(data_df.shape))
+    logger.debug("data_df.head()\n{}".format(data_df.head()))
+    
+    return data_df
+
+
+def prepare_col_metadata(dge_stat, data_df_columns):
+    col_meta_list = [x.split("_") for x in data_df_columns]
+    col_metadata_df = pandas.DataFrame(col_meta_list)
     col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
     col_metadata_df["dge_statistic"] = dge_stat
-    logger.debug("col_metadata_df: {}".format(col_metadata_df))
+    logger.debug("col_metadata_df: \n{}".format(col_metadata_df.head()))
+    return col_metadata_df
 
-    heatmap_g = GCToo.GCToo(combined_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df)
+def prepare_GCToo_object(dge_stat, dge_df_list):
+    row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
+
+    #easier to test if we make a method that is 
+
+    data_df = prepare_data_df(dge_stat, dge_df_list)
+
+    col_metadata_df = prepare_col_metadata(dge_stat, data_df.columns)
+
+    heatmap_g = GCToo.GCToo(data_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df)
     logger.debug("heatmap_g: {}".format(heatmap_g))
     return heatmap_g
 

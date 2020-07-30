@@ -38,6 +38,10 @@ def random_of_input_file(name, dirs):
         with open(outputpath, 'a') as f_output:
             for line in f_input:
                 f_output.write(line)
+
+        #one way is find a python touch method and use that to create an empty file 
+        #if a file is not there touch creates it if the file is there it updates the timestame to the current timestamp
+        #
                 
         # first_line = f_input.readline()
         # with open(outputpath, 'w') as f_output:
@@ -55,7 +59,7 @@ def random_of_input_file(name, dirs):
     
 
 
-class TestGeneralPythonScriptTemplate(unittest.TestCase):
+class TestPrepHeatmaps(unittest.TestCase):
     def test_main(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_main:  {}\n \n ".format(wkdir))
@@ -114,7 +118,7 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
     
     def test_find_DGE_files(self):
          with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_find_DGE_files:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_find_DGE_files wkdir:  {}\n \n ".format(wkdir))
             
             #saving the test versions of source_dir and test_id to variables and also creating a test id that won't be tested
             source_dir = os.path.join(wkdir,"source_test")
@@ -127,15 +131,25 @@ class TestGeneralPythonScriptTemplate(unittest.TestCase):
             os.mkdir(dge_data_test)
 
             #creating files for the method to find and put into a list
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+
+            expectedbasename1 = random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
+            expectedbasename2 = random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((notthistest_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
             
+
+
             #running the method
             dge_file_list = ph.find_DGE_files(source_dir, test_id)
 
+            #create a strings to the path 
+            #can create variable, os.path.basename of dge_file_list and check that the string is that 
+
             #assert that the list has what you want in it
             self.assertTrue(len(dge_file_list) == 2)
+            expectedbasenameset = {expectedbasename1, expectedbasename2}
+            r_basenameset = set([os.path.basename(x) for x in dge_file_list])
+            self.assertEqual(expectedbasenameset, r_basenameset)
+
     
     def test_read_DGE_files(self):
         #test can be improved, right now it only test when there is one thing in dge_file_list, which while it shows

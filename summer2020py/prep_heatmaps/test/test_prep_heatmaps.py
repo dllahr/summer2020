@@ -155,7 +155,7 @@ class TestPrepHeatmaps(unittest.TestCase):
         #test can be improved, right now it only test when there is one thing in dge_file_list, which while it shows
         #that the methods works the are ways that this test could pass but the code isn't working correctly 
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_read_DGE_files:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_read_DGE_files wkdir:  {}\n \n ".format(wkdir))
             #creating testod and paths of the directories
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
@@ -172,14 +172,89 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             dge_df_list = ph.read_DGE_files(dge_file_list)
             
-            i = 0
+            expected_columns_list = ['gene_symbol', 'logFC', 'CI_L', 'CI_R', 'AveExpr', 't', 'P_Value','adj_P_Val', 'B', 'neg_log_adj_P_Val']
+
+            self.assertTrue(len(dge_df_list) == 2)
             for dge_df, dge_file in dge_df_list:
-                self.assertTrue(dge_df.equals(pandas.read_csv(dge_file_list[i], sep="\t", index_col=0))) 
-                i += 1
+                self.assertListEqual(dge_df.columns.tolist(), expected_columns_list)
+            
+
+    def test_prepare_data_df(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_prepare_data_df: wkdir {}\n \n ".format(wkdir))
+            #creating file and a list to pass into read DGE_files
+            test_id ="H202SC20040591"
+            source_dir = os.path.join(wkdir,"source_test")
+            dge_data_test = os.path.join(source_dir, "dge_data")
+
+            #creating directories
+            os.mkdir(source_dir)
+            os.mkdir(dge_data_test)
+
+            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+
+            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+
+            dge_df_list = ph.read_DGE_files(dge_file_list)
+            dge_stat =  "logFC"
+
+            data_df = ph.prepare_data_df(dge_stat, dge_df_list)
+            logger.debug("data_df\n{}".format(data_df))
+            logger.debug("data_df.columns\n{}".format(data_df.columns.tolist()))
+            
+            
+            for item in data_df.columns.tolist():
+                list_ = item.split("_")
+                self.assertEqual(list_[0], dge_stat)
+ 
+            #something to test that it worked
+
+
+    def test_prepare_col_metadata(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_prepare_col_metadata: wkdir {}\n \n ".format(wkdir))
+
+            logger.debug("\n \n \n test_prepare_data_df: wkdir {}\n \n ".format(wkdir))
+            #creating file and a list to pass into read DGE_files
+            test_id ="H202SC20040591"
+            source_dir = os.path.join(wkdir,"source_test")
+            dge_data_test = os.path.join(source_dir, "dge_data")
+
+            #creating directories
+            os.mkdir(source_dir)
+            os.mkdir(dge_data_test)
+
+            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+
+            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+
+            dge_df_list = ph.read_DGE_files(dge_file_list)
+            dge_stat =  "logFC" 
+
+            data_df = ph.prepare_data_df(dge_stat, dge_df_list)
+            
+            col_metadata_df = ph.prepare_col_metadata(dge_stat, data_df.columns)
+
+            for item in col_metadata_df.index.tolist():
+                list_ = item.split("_")
+                self.assertEqual(list_[0], dge_stat)
+
+
+            for item in col_metadata_df.columns.tolist():
+                if item == "dge_statistic":
+                    dge_staritstic_there = True
+
+            self.assertTrue(dge_staritstic_there)
+
+            #something to test that the columns are correct  right now only check that one column is named dge_statistic
+
+
     
     def test_prepare_GCToo_object(self):     
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_prepare_GCToo_object:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_prepare_GCToo_object wkdir:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
@@ -199,13 +274,16 @@ class TestPrepHeatmaps(unittest.TestCase):
         
             heatmap_g = ph.prepare_GCToo_object(dge_stat, dge_df_list)
 
+            logger.debug("heatmap_g: \n{}".format(heatmap_g))
+        
+
             #something to test that it works
 
     def test_prepare_all_GCToo_objects(self):
         #test can be improved, right now it only test when there is one thing in dge_file_list, which while it shows
         #that the methods works the are ways that this test could pass but the code isn't working correctly 
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_read_DGE_files:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_read_DGE_files wkdir:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
@@ -227,11 +305,21 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             self.assertEqual(len(heatmap_gct_list), 2)
 
+            dge_stat_from_heatmap_gct_list = []
+        
+            for i in range(0, len(heatmap_gct_list)):
+                dge_stat_from_heatmap_gct_list.append(heatmap_gct_list[i][0])
+
+            self.assertListEqual(dge_stat_from_heatmap_gct_list, dge_stats_for_heatmaps)
+
+            #only test that the stats for heamtamps are there, does not test the actual GCtToo object
+                
+
             #can't think of a way to test this without having the code from the method
 
     def test_write_GCToo_objects_to_files(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_write_GCToo_objects_to_files:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_write_GCToo_objects_to_files wkdir:  {}\n \n ".format(wkdir))
             
             #creating file and a list to pass into read DGE_files
             test_id ="H202SC20040591"
@@ -264,7 +352,7 @@ class TestPrepHeatmaps(unittest.TestCase):
     def test_prepare_links(self):
         
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_prepare_links:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_prepare_links: wkdir {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
@@ -311,7 +399,7 @@ class TestPrepHeatmaps(unittest.TestCase):
 
     def test_write_to_html(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_write_to_html:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_write_to_html wkdir:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
 
             test_id ="H202SC20040591"
@@ -322,28 +410,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
-
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
-
-            dge_df_list = ph.read_DGE_files(dge_file_list)
-            dge_stats_for_heatmaps = ["logFC", "t"]
-            dge_df_list = ph.read_DGE_files(dge_file_list)
-
-            heatmap_gct_list = ph.prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
-            
-            heatmap_dir = source_dir
-
-            base_data_path = wkdir
-
-            output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
-
-            url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
-
-            ph.write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
-
-            url_list = ph.prepare_links(heatmap_gct_list, url_template, base_data_path)
+            url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:\\Users\\avsom\\AppData\\Local\\Temp\\test_prep_heatmapsbg_595px\\H202SC20040591_heatmap_logFC_r10x2.gct'), 
+            ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:\\Users\\avsom\\AppData\\Local\\Temp\\test_prep_heatmapsbg_595px\\H202SC20040591_heatmap_t_r10x2.gct')]
 
             output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id= test_id)
             
@@ -353,7 +421,7 @@ class TestPrepHeatmaps(unittest.TestCase):
 
     def test_write_html_to_file(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_write_html_to_file:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_write_html_to_file wkdir :  {}\n \n ".format(wkdir))
 
             test_id ="H202SC20040591"
             source_dir = os.path.join(wkdir,"source_test")
@@ -363,28 +431,10 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
-
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
-
-            dge_df_list = ph.read_DGE_files(dge_file_list)
-            dge_stats_for_heatmaps = ["logFC", "t"]
-            dge_df_list = ph.read_DGE_files(dge_file_list)
-
-            heatmap_gct_list = ph.prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
-            
             heatmap_dir = source_dir
 
-            base_data_path = wkdir
-
-            output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
-
-            url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
-
-            ph.write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
-
-            url_list = ph.prepare_links(heatmap_gct_list, url_template, base_data_path)
+            url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:\\Users\\avsom\\AppData\\Local\\Temp\\test_prep_heatmapsbg_595px\\H202SC20040591_heatmap_logFC_r10x2.gct'), 
+            ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:\\Users\\avsom\\AppData\\Local\\Temp\\test_prep_heatmapsbg_595px\\H202SC20040591_heatmap_t_r10x2.gct')]
 
             a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
             """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]

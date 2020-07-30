@@ -127,6 +127,7 @@ def prepare_col_metadata(dge_stat, data_df_columns):
     col_metadata_df = pandas.DataFrame(col_meta_list)
     col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
     col_metadata_df["dge_statistic"] = dge_stat
+    col_metadata_df.index = data_df_columns
     logger.debug("col_metadata_df: \n{}".format(col_metadata_df.head()))
     return col_metadata_df
 
@@ -157,6 +158,7 @@ def write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
 
 def prepare_links(heatmap_gct_list, url_template, base_data_path):
     url_list = []
+    logger.debug("heatmap{}".format(heatmap_gct_list))
 
     for dge_stat, heatmap_g in heatmap_gct_list:
         data_path = os.path.join(base_data_path, heatmap_g.src)
@@ -167,6 +169,7 @@ def prepare_links(heatmap_gct_list, url_template, base_data_path):
     
         url_list.append((dge_stat, cur_url))
     logger.debug(len(url_list))
+    logger.debug("url_list: \n{}".format(url_list))
     return url_list
 
 def write_to_html(heatmap_dir, output_html_link_file, url_list, experiment_id):

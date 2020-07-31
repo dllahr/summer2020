@@ -174,13 +174,16 @@ def prepare_links(heatmap_gct_list, url_template, base_data_path):
 
 def write_to_html(heatmap_dir, output_html_link_file, url_list, experiment_id):
     html_filepath = os.path.join(heatmap_dir, output_html_link_file)
-    logger.debug(html_filepath)
+    logger.debug("html_filepath: {}".format(html_filepath))
     logger.debug("")
 
     a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
     """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]
 
-    write_html_to_file(a_lines, experiment_id, html_filepath)
+    html = write_html_to_file(a_lines, experiment_id, html_filepath)
+
+    return html
+
 
 def write_html_to_file(a_lines, experiment_id, html_filepath):
     html = ("""<html>
@@ -199,6 +202,9 @@ def write_html_to_file(a_lines, experiment_id, html_filepath):
     f = open(html_filepath, "w")
     f.write(html)
     f.close()
+
+    return html
+
 
 def main(args):
     output_template = args.experimentid + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
@@ -237,6 +243,8 @@ def main(args):
 
     write_to_html(heatmap_dir, output_html_link_file, url_list, args.experimentid)
     #writing url list to html file
+
+    
 
 
 

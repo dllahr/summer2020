@@ -211,7 +211,8 @@ def main(args):
     logger.debug("output_template{}".format(output_template))
     #the output template that will be used later 
 
-    base_data_path = "{base_path}{exp_id}{relative_path}".format(base_path = args.basedatapath, exp_id= args.experimentid, relative_path = args.relativepath)
+    #base_data_path = "{base_path}{exp_id}{relative_path}".format(base_path = args.basedatapath, exp_id= args.experimentid, relative_path = args.relativepath)
+    base_data_path = os.path.join(args.basedatapath, args.experimentid, args.relativepath)
     logger.debug(base_data_path)
     #where the data is 
 
@@ -241,8 +242,10 @@ def main(args):
     url_list = prepare_links(heatmap_gct_list, url_template, base_data_path)
     #creating list of urls that will be added to file
 
-    write_to_html(heatmap_dir, output_html_link_file, url_list, args.experimentid)
+    html = write_to_html(heatmap_dir, output_html_link_file, url_list, args.experimentid)
     #writing url list to html file
+
+    return html
 
     
 

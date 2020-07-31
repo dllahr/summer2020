@@ -89,7 +89,18 @@ class TestPrepHeatmaps(unittest.TestCase):
 
 
             
-            ph.main(args)
+            html = ph.main(args)
+
+            expected_html = ("""<html>
+    <body>
+    <h1>H202SC20040591 links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
+    <ul><li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}\\H202SC20040591_heatmap_logFC_r10x2.gct"> heatmap of dge statistic:  logFC</a></li>
+    <li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}\\H202SC20040591_heatmap_t_r10x2.gct"> heatmap of dge statistic:  t</a></li>
+    </ul>
+    </body>
+    </html>""").format(os.path.join(args.basedatapath, args.experimentid, args.relativepath), os.path.join(args.basedatapath, args.experimentid, args.relativepath))
+
+            self.assertEqual(expected_html, html)
 
             
 

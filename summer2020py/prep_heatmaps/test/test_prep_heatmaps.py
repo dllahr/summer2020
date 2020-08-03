@@ -13,6 +13,8 @@ import random
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
+#I think I need to make changes before I do I pull request, don't know if only the changes show up if they do hi
+
 # Some notes on testing conventions (more in cuppers convention doc):
 #    (1) Use "self.assert..." over "assert"
 #        - self.assert* methods: https://docs.python.org/2.7/library/unittest.html#assert-methods

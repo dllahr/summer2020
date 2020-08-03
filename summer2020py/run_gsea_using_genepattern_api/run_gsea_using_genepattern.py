@@ -3,6 +3,14 @@ import summer2020py
 import summer2020py.setup_logger as setup_logger
 import argparse
 import sys
+import os
+import glob
+import zipfile
+import shutil
+
+import pandas
+
+import gp
 
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
@@ -28,6 +36,48 @@ def build_parser():
     mutually_exclusive_group.add_argument("--option2", action="store", dest="option2", help="provide argument for option2", default=None)
     return parser
 
+
+def prepare_output_dir():
+    pass
+
+def find_DGE_files():
+    pass
+
+def build_all_rnk_files():
+    pass
+
+def build_rnk_file():
+    pass
+
+def upload_input_gp_files():
+    pass
+
+def task_list():
+    pass
+
+def params_list():
+    pass
+
+def print_param_info():
+    pass
+
+def print_valid_param_choices():
+    pass
+
+def create_reference_geneset_urls():
+    pass
+
+def create_all_job_spec_list():
+    pass
+
+def create_job_list():
+    pass
+
+def prepare_zip_files_list():
+    pass
+
+def zip_files():
+    pass
 
 def main(args):
     logger.info("run_gsea_using_genepattern")

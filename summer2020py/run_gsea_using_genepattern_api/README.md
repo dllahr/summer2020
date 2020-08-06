@@ -1,3 +1,19 @@
+
+links 
+
+using genepattern in python
+https://www.genepattern.org/programmers-guide#_Using_GenePattern_from_Python
+
+unit test mocking
+https://docs.python.org/3/library/unittest.mock.html
+
+genepattern mocking
+https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!topic/genepattern-help/eZWRJrJxQ6Y
+
+
+
+
+
 importing various things 
 os and shutil to do stuff with directories
 pandas to do data frame

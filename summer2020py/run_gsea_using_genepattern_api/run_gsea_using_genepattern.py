@@ -21,19 +21,18 @@ def build_parser():
     parser.add_argument("--verbose", "-v", help="Whether to print a bunch of output.", action="store_true", default=False)
     parser.add_argument("--hostname", help="lims db host name", type=str, default="getafix-v")
 
-    parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
-        type=str, default=summer2020py.default_config_filepath)
-    parser.add_argument("--config_section", help="section of config file to use for information about how to connect to CDD API, ArxLab API etc.",
-        type=str, default=summer2020py.default_config_section)
 
-    parser.add_argument("--queue_choice", "-qc", help="which of the queues to work on - valid values are roast, brew, both", type=str,
-        choices=["roast", "brew", "both"], default="both")
-    parser.add_argument("--add_to_queue", "-a", help="add the det_plate entries to the roast_queue", type=str, nargs="+", default=None)
+    parser.add_argument("--sourcedir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", type = str, required = True )
+    parser.add_argument("--experimentid", "-e", help = "id of the expirment", type = str, required = True)
+    
+    parser.add_argument("--dgestatsforrnklist", "-d", help = "dge stats for heatmaps",  default = ["logFC", "t"])
+
+    
+
+    
     # To make --option1 and --option2 mutually exclusive, one can define mutually_exclusive_group in argparse,
     # argparse asserts that the options added to the group are not used at the same time and throws exception if otherwise
-    mutually_exclusive_group = parser.add_mutually_exclusive_group()
-    mutually_exclusive_group.add_argument("--option1", action="store", dest="option1", help="provide argument for option1", default=None)
-    mutually_exclusive_group.add_argument("--option2", action="store", dest="option2", help="provide argument for option2", default=None)
+    
     return parser
 
 
@@ -67,25 +66,15 @@ def build_all_rnk_files(dge_file_list, dge_stats_for_rnk_list, rnk_dir):
         logger.debug("dge_df.shape: {}".format(dge_df.shape))
         
         base_dge_filename = os.path.splitext(os.path.basename(dge_file))[0]
-        print(base_dge_filename)
+        logger.debug("base_dge_filename: {}".format(base_dge_filename))
         
         base_output_filename = "_".join(base_dge_filename.split("_")[:-2])
         logger.debug("base_output_filename: {}".format(base_output_filename))
         
         for dge_stat_for_rnk in dge_stats_for_rnk_list:
-            rnk_df = dge_df.loc[~pandas.isnull(dge_df.gene_symbol), 
-                                ["gene_symbol", dge_stat_for_rnk]].copy()
-            new_cols = list(rnk_df.columns)
-            new_cols[0] = "#" + new_cols[0]
-            rnk_df.columns = new_cols
-            logger.debug("rnk_df.head(): \n {}".format(rnk_df.head()))
+
+            rnk_df, output_filepath = build_rnk_file(dge_df, dge_stat_for_rnk, base_output_filename, rnk_dir)
             
-            output_rnk_file = base_output_filename + "_{dge_stat}_r{rows}x{cols}.rnk".format(
-                dge_stat=dge_stat_for_rnk, rows=rnk_df.shape[0], cols=rnk_df.shape[1]
-            )
-            logger.debug("output_rnk_file: {}".format(output_rnk_file))
-            
-            output_filepath = os.path.join(rnk_dir, output_rnk_file)
             input_rnk_files_list.append(output_filepath)
             rnk_df.to_csv(output_filepath, sep="\t", index=False)
         
@@ -96,8 +85,23 @@ def build_all_rnk_files(dge_file_list, dge_stats_for_rnk_list, rnk_dir):
 
         return input_rnk_files_list
 
-def build_rnk_file():
-    pass
+def build_rnk_file(dge_df, dge_stat_for_rnk, base_output_filename, rnk_dir):
+    rnk_df = rnk_df = dge_df.loc[~pandas.isnull(dge_df.gene_symbol), 
+                                ["gene_symbol", dge_stat_for_rnk]].copy()
+    new_cols = list(rnk_df.columns)
+    new_cols[0] = "#" + new_cols[0]
+    rnk_df.columns = new_cols
+    logger.debug("rnk_df.head(): \n {}".format(rnk_df.head()))
+        
+    output_rnk_file = base_output_filename + "_{dge_stat}_r{rows}x{cols}.rnk".format(
+    dge_stat=dge_stat_for_rnk, rows=rnk_df.shape[0], cols=rnk_df.shape[1]
+    )
+    logger.debug("output_rnk_file: {}".format(output_rnk_file))
+        
+    output_filepath = os.path.join(rnk_dir, output_rnk_file)
+
+    return rnk_df, output_filepath
+
 
 def create_gp_server(gp_url, gp_username, gp_password):
     # Create a GenePattern server proxy instance
@@ -290,22 +294,10 @@ def prepare_zip_files_list(job_list, zip_dir):
         t = [x for x in job.get_output_files() if x.get_name().endswith(".zip")]
         
         if len(t) == 1:
-            zip_output_file = t[0]
-        #     print(zip_output_file.get_name())
-        #     print(zip_output_file.get_url())
+            dl_filepath = if_len_t_1(t, zip_dir, gs_group_name)
 
-            dl_filename = os.path.splitext(zip_output_file.get_name())[0] + "_" + gs_group_name + ".zip"
-        #     print(dl_filename)
-
-            dl_filepath = os.path.join(zip_dir, dl_filename)
             zip_files_list.append(dl_filepath)
-
-            logger.debug(zip_output_file.get_url())
-            logger.debug(dl_filepath)
-
-            f = open(dl_filepath, "wb")
-            f.write(zip_output_file.open().read())
-            f.close()
+            
         elif len(t) == 0:
             logger.debug("********************* ALERT! ************************")
             logger.debug("Zip file not found may mean job failed to run")
@@ -326,6 +318,28 @@ def prepare_zip_files_list(job_list, zip_dir):
     logger.debug()
 
     return zip_files_list, no_zip_files
+
+def if_len_t_1(t, zip_dir, gs_group_name):
+    zip_output_file = t[0]
+    #print(zip_output_file.get_name())
+    #print(zip_output_file.get_url())
+
+    dl_filename = os.path.splitext(zip_output_file.get_name())[0] + "_" + gs_group_name + ".zip"
+    #print(dl_filename)
+
+    dl_filepath = os.path.join(zip_dir, dl_filename)
+    
+
+    logger.debug(zip_output_file.get_url())
+    logger.debug(dl_filepath)
+
+    f = open(dl_filepath, "wb")
+    f.write(zip_output_file.open().read())
+    f.close()
+
+    return dl_filepath
+
+
 
 def print_no_zip_flies(no_zip_files):
     for gs_group_name, job in no_zip_files:
@@ -355,10 +369,10 @@ def zipping_zip_files(zip_files_list, gsea_dir):
 
 def main(args):
     logger.info("run_gsea_using_genepattern")
-    source_dir = "/Users/dlahr/temp/H202SC20040591_dge/analysis/"
-    experiment_id = "H202SC20040591"
+    source_dir = args.sourcedir
+    experiment_id = args.experiment_id
 
-    dge_stats_for_rnk_list = ["logFC", "t"]
+    dge_stats_for_rnk_list = args.dgestatsforrnklist
 
     num_permutations = 1000
 

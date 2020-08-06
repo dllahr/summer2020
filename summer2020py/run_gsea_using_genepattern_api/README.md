@@ -10,6 +10,9 @@ https://docs.python.org/3/library/unittest.mock.html
 genepattern mocking
 https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!topic/genepattern-help/eZWRJrJxQ6Y
 
+zipfile 
+https://docs.python.org/3.8/library/zipfile.html
+
 
 
 

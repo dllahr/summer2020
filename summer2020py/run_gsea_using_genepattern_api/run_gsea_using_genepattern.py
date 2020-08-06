@@ -27,11 +27,11 @@ def build_parser():
     
     parser.add_argument("--dgestatsforrnklist", "-d", help = "dge stats for heatmaps",  default = ["logFC", "t"])
 
-    
+    parser.add_argument("--gpserver", "-gps", help = "gp server", required = True)
+    parser.add_argument("--gpusername", 'gpu', help = "gp password", required = True)
+    parser.add_argument("--gppassword", 'gpp', help = "gp password", required = True)
 
-    
-    # To make --option1 and --option2 mutually exclusive, one can define mutually_exclusive_group in argparse,
-    # argparse asserts that the options added to the group are not used at the same time and throws exception if otherwise
+    #could make the default args for this dave's username password and server path, and then removed required but not going to do that now
     
     return parser
 
@@ -393,9 +393,9 @@ def main(args):
     logger.debug("len(reference_genesets): {}".format(len(reference_genesets)))
     logger.debug([(k,len(v)) for k,v in reference_genesets])
 
-    gp_username = "dllahr"
-    gp_password = "yQJ7a6m^mBE07#845@Ll#AJq!"
-    gp_url = "https://cloud.genepattern.org/gp"
+    gp_username = args.gpusername
+    gp_password = args.gppassword
+    gp_url = args.gpserver
 
 
     gsea_dir, rnk_dir = prepare_output_dir(source_dir)

@@ -4,6 +4,7 @@ import summer2020py.setup_logger as setup_logger
 import summer2020py.run_gsea_using_genepattern_api.run_gsea_using_genepattern as rgug
 import os
 import tempfile
+import pandas
 
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
@@ -99,6 +100,66 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
             expectedbasenameset = {expectedbasename1, expectedbasename2}
             r_basenameset = set([os.path.basename(x) for x in dge_file_list])
             self.assertEqual(expectedbasenameset, r_basenameset)
+
+    def test_build_all_rnk_files(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_build_all_rnk_files wkdir:  {}\n \n ".format(wkdir))
+            #creating testod and paths of the directories
+            test_id ="H202SC20040591"
+            source_dir = os.path.join(wkdir,"source_test")
+            dge_data_test = os.path.join(source_dir, "dge_data")
+
+            #creating directories
+            os.mkdir(source_dir)
+            os.mkdir(dge_data_test)
+
+            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+
+            gsea_dir, rnk_dir = rgug.prepare_output_dir(source_dir)
+            
+            dge_file_list = rgug.find_DGE_files(source_dir, test_id)
+
+            dge_stats_for_rnk_list = ["logFC", "t"]
+
+            input_rnk_files_list = rgug.build_all_rnk_files(dge_file_list, dge_stats_for_rnk_list, rnk_dir)
+            
+            expected_first_columns = ['#gene_symbol']
+
+            
+
+    def test_build_rnk_file(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_build_rnk_file wkdir:  {}\n \n ".format(wkdir))
+            #creating testod and paths of the directories
+            test_id ="H202SC20040591"
+            source_dir = os.path.join(wkdir,"source_test")
+            dge_data_test = os.path.join(source_dir, "dge_data")
+
+            #creating directories
+            os.mkdir(source_dir)
+            os.mkdir(dge_data_test)
+
+            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+
+            gsea_dir, rnk_dir = rgug.prepare_output_dir(source_dir)
+            
+            dge_file_list = rgug.find_DGE_files(source_dir, test_id)
+
+            dge_file = dge_file_list[0]
+            
+            dge_df = pandas.read_csv(dge_file, sep="\t")
+
+            base_dge_filename = os.path.splitext(os.path.basename(dge_file))[0]
+
+            base_output_filename = "_".join(base_dge_filename.split("_")[:-2])
+
+            dge_stat_for_rnk = ["logFC"]
+
+            rnk_df, output_filepath = rgug.build_rnk_file(dge_df, dge_stat_for_rnk, base_output_filename, rnk_dir)
+
+            
 
 
 

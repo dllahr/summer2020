@@ -124,7 +124,9 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
 
             input_rnk_files_list = rgug.build_all_rnk_files(dge_file_list, dge_stats_for_rnk_list, rnk_dir)
             
-            expected_first_columns = ['#gene_symbol']
+            #could be better, check that the first part of the item on the list is the correct path
+            self.assertEqual(len(input_rnk_files_list), 2)
+            
 
             
 
@@ -155,9 +157,15 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
 
             base_output_filename = "_".join(base_dge_filename.split("_")[:-2])
 
-            dge_stat_for_rnk = ["logFC"]
+            dge_stat_for_rnk = "logFC"
 
             rnk_df, output_filepath = rgug.build_rnk_file(dge_df, dge_stat_for_rnk, base_output_filename, rnk_dir)
+
+            expected_output_filepath = os.path.join(rnk_dir, "H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_logFC_r10x2.rnk")
+
+            #could also check the df to make sure it is correct
+            self.assertEqual(expected_output_filepath, output_filepath)
+            
 
             
 

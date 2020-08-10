@@ -165,6 +165,27 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
 
             #could also check the df to make sure it is correct
             self.assertEqual(expected_output_filepath, output_filepath)
+
+    def test_create_gp_server(self):
+        #create a mock
+        #call the method, It will not actually create a server, just return whatever the method should return
+        #assert that the server creation thing was called once
+        pass 
+
+    def test_upload_input_gp_files(self):
+        #check that for for every file in input_rnk_file_list, there is a url that has it's basename at the ending
+        #something like this
+        # for file in input_rnk_file_list
+        #    self.assertEquasl("*" + os.path.basename(file), (someting fron url list)
+        pass
+
+    def test_task_list(self):
+        # check that gsea_preranked_module is as it should be / has expected things in it
+        pass
+
+    def test_create_params_list(self):
+        #should be simple as it's three lines of code as test that the mock is called once and that's that
+        pass
             
 
             

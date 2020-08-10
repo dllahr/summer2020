@@ -48,7 +48,7 @@ def prepare_output_dir(source_dir):
 
 def  find_DGE_files(source_dir, experiment_id):
     dge_file_list = glob.glob(
-    os.path.join(source_dir, "dge_data", experiment_id + "_*_DGE_r*.txt")
+        os.path.join(source_dir, "dge_data", experiment_id + "_*_DGE_r*.txt")
     )
     #set equa to dge_file_list all the files in source dir, in dge_data that start with the experiment id and end with _*_DGE_r*.txt where * is wildcard
 
@@ -62,13 +62,16 @@ def  find_DGE_files(source_dir, experiment_id):
 
 def read_DGE_files(dge_file_list):
     dge_df_list = [
-    (pandas.read_csv(dge_file, sep="\t", index_col=0),
-    os.path.basename(dge_file))
-    for dge_file in dge_file_list
+        (
+            pandas.read_csv(dge_file, sep="\t", index_col=0),
+            os.path.basename(dge_file)
+        )
+        for dge_file in dge_file_list
     ]
     #this is a list comprehension, it is the same as the code in the comment below
-        # for dge_file in dge_file_list
-            #dge_df_list.append(pandas.read_csv(dge_file, sep="\t", index_col=0),os.path.basename(dge_file))
+    # dge_df_list = []
+    # for dge_file in dge_file_list
+    #   dge_df_list.append(pandas.read_csv(dge_file, sep="\t", index_col=0),os.path.basename(dge_file))
     
     logger.debug([x[0].shape for x in dge_df_list])
     #another list comprhension this one is the same as this
@@ -85,9 +88,8 @@ def read_DGE_files(dge_file_list):
 def prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
     heatmap_gct_list = []
 
-    # for dge_df in dge_df_list:
     for dge_stat in dge_stats_for_heatmaps:
-        
+
         heatmap_g = prepare_GCToo_object(dge_stat, dge_df_list)
 
         heatmap_gct_list.append((dge_stat, heatmap_g))
@@ -98,7 +100,6 @@ def prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
 
 
 def prepare_data_df(dge_stat, dge_df_list):
-    #col_metadata_dict = {}
     extract_df_list = []
     
     for dge_df, dge_file in dge_df_list:
@@ -106,14 +107,13 @@ def prepare_data_df(dge_stat, dge_df_list):
         annotation_values = basename.split("_")
         annotation_str = "_".join(annotation_values[1:-2])
         logger.debug("annotation_str: {}".format(annotation_str))
-            
-            
+
         extract_df = dge_df[[dge_stat]]
         col_id  = dge_stat + "_" + annotation_str
         extract_df.columns = [col_id]
-        #display(extract_df.head())
+        logger.debug("extract_df.head():\n{}".format(extract_df.head()))
+
         extract_df_list.append(extract_df)
-        #col_metadata_dict[col_id] = annotation_values
 
     data_df = pandas.concat(extract_df_list, axis=1)
     logger.debug("data_df.shape: {}".format(data_df.shape))
@@ -133,8 +133,6 @@ def prepare_col_metadata(dge_stat, data_df_columns):
 
 def prepare_GCToo_object(dge_stat, dge_df_list):
     row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
-
-    #easier to test if we make a method that is 
 
     data_df = prepare_data_df(dge_stat, dge_df_list)
 

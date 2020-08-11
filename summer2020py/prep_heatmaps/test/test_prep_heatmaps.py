@@ -226,8 +226,9 @@ class TestPrepHeatmaps(unittest.TestCase):
             dge_stat =  "logFC"
 
             data_df = ph.prepare_data_df(dge_stat, dge_df_list)
-            logger.debug("data_df\n{}".format(data_df))
+            logger.debug("data_df\n{}".format(data_df.values.tolist()))
             logger.debug("data_df.columns\n{}".format(data_df.columns.tolist()))
+            logger.debug("data_df.columns\n{}".format(data_df.index.tolist()))
             
             
             for item in data_df.columns.tolist():
@@ -372,16 +373,37 @@ class TestPrepHeatmaps(unittest.TestCase):
             )
             for dge_file in dge_file_list
             ]
-            dge_stats_for_heatmaps = ["logFC", "t"]
-
-            heatmap_gct_list = ph.prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
+            
+            test_dge_stat = "logFC"
             
             output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
             heatmap_dir = source_dir
 
-            ph.write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
 
-            for dge_stat, heatmap_g in heatmap_gct_list:
+            data_df_vaules = [[0.0776354686633181, 0.0776354686633181], [-0.581704751304994, -0.581704751304994], [-0.6736706335046471, -0.6736706335046471], 
+            [-0.6983420979505, -0.6983420979505], [0.17469165710934198, 0.17469165710934198], [0.00627185142921816, 0.00627185142921816], 
+            [-0.368901439453788, -0.368901439453788], [0.144740264311605, 0.144740264311605], [1.03902293388003, 1.03902293388003], [-0.243853638780661, -0.243853638780661]]
+
+            data_columns = ['logFC_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h', 'logFC_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h']
+
+            data_index = ['ENSG00000236389', 'ENSG00000115355', 'ENSG00000162613', 'ENSG00000189143', 'ENSG00000204044', 
+            'ENSG00000259051', 'ENSG00000126467', 'ENSG00000276408', 'ENSG00000136842', 'ENSG00000239559']
+
+            data_df = pandas.DataFrame(data_df_vaules, columns = data_columns, index = data_index)
+
+            col_meta_list = [x.split("_") for x in data_columns]
+            col_metadata_df = pandas.DataFrame(col_meta_list)
+            col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
+            col_metadata_df["dge_statistic"] = test_dge_stat
+            col_metadata_df.index = data_df.columns
+
+            row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
+
+            test_heatmap_gct_list = [("logFC", GCToo.GCToo(data_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df))]
+
+            ph.write_GCToo_objects_to_files(test_heatmap_gct_list, output_template, heatmap_dir)
+
+            for dge_stat, heatmap_g in test_heatmap_gct_list:
                 output_filename = output_template.format(
                 dge_stat=dge_stat, rows=heatmap_g.data_df.shape[0], cols=heatmap_g.data_df.shape[1]
                 )
@@ -415,12 +437,31 @@ class TestPrepHeatmaps(unittest.TestCase):
             )
             for dge_file in dge_file_list
             ]
-            dge_stats_for_heatmaps = ["logFC", "t"]
+            test_dge_stat = "logFC"
 
-            heatmap_gct_list = ph.prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
-            
-            heatmap_dir = source_dir
+            output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
+    
 
+            data_df_vaules = [[0.0776354686633181, 0.0776354686633181], [-0.581704751304994, -0.581704751304994], [-0.6736706335046471, -0.6736706335046471], 
+            [-0.6983420979505, -0.6983420979505], [0.17469165710934198, 0.17469165710934198], [0.00627185142921816, 0.00627185142921816], 
+            [-0.368901439453788, -0.368901439453788], [0.144740264311605, 0.144740264311605], [1.03902293388003, 1.03902293388003], [-0.243853638780661, -0.243853638780661]]
+
+            data_columns = ['logFC_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h', 'logFC_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h']
+
+            data_index = ['ENSG00000236389', 'ENSG00000115355', 'ENSG00000162613', 'ENSG00000189143', 'ENSG00000204044', 
+            'ENSG00000259051', 'ENSG00000126467', 'ENSG00000276408', 'ENSG00000136842', 'ENSG00000239559']
+
+            data_df = pandas.DataFrame(data_df_vaules, columns = data_columns, index = data_index)
+
+            col_meta_list = [x.split("_") for x in data_columns]
+            col_metadata_df = pandas.DataFrame(col_meta_list)
+            col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
+            col_metadata_df["dge_statistic"] = test_dge_stat
+            col_metadata_df.index = data_df.columns
+
+            row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
+
+            test_heatmap_gct_list = [("logFC", GCToo.GCToo(data_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df))]
             
             base_data_path = wkdir
 
@@ -428,12 +469,17 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
 
-            ph.write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
 
-            url_list = ph.prepare_links(heatmap_gct_list, url_template, base_data_path)
+            for dge_stat, heatmap_g in test_heatmap_gct_list:
+                output_filename = output_template.format(
+                    dge_stat=dge_stat, rows=heatmap_g.data_df.shape[0], cols=heatmap_g.data_df.shape[1]
+                )
+                heatmap_g.src = output_filename
+
+            url_list = ph.prepare_links(test_heatmap_gct_list, url_template, base_data_path)
 
             i = 0
-            for dge_stat, heatmap_g in heatmap_gct_list:
+            for dge_stat, heatmap_g in test_heatmap_gct_list:
                 data_path = os.path.join(base_data_path, heatmap_g.src)
                 cur_url = url_template.format(data_path=data_path)
                 self.assertTrue(url_list[i] == (dge_stat, cur_url))
@@ -450,7 +496,7 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_logFC_r10x2.gct'.format(wkdir)), 
             ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_t_r10x2.gct'.format(wkdir))]
-            output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id= test_id)
+            
 
             a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
     """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]

@@ -63,7 +63,7 @@ class TestPrepHeatmaps(unittest.TestCase):
     def test_main(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_main:  {}\n \n ".format(wkdir))
-            test_id = "H202SC20040591"
+            test_id = "MYTESTID1234567"
             base_path = wkdir
             relative_path = "heatmaps"
             server = "http://fht.samba.data/fht_morpheus.html?gctData="
@@ -80,8 +80,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(os.path.join(wkdir, test_id, relative_path))     
             
             #adding some samples
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
         
             #simulate adding the commands on the command line using parser
             args = ph.build_parser().parse_args(["-s", source_dir, "-e", test_id, "-d", dgestatsforheatmaps, "-b", 
@@ -93,13 +93,15 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             expected_html = ("""<html>
     <body>
-    <h1>H202SC20040591 links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
-    <ul><li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}\\H202SC20040591_heatmap_logFC_r10x2.gct"> heatmap of dge statistic:  logFC</a></li>
-    <li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}\\H202SC20040591_heatmap_t_r10x2.gct"> heatmap of dge statistic:  t</a></li>
+    <h1>MYTESTID1234567 links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
+    <ul><li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}/MYTESTID1234567_heatmap_logFC_r10x2.gct"> heatmap of dge statistic:  logFC</a></li>
+    <li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}/MYTESTID1234567_heatmap_t_r10x2.gct"> heatmap of dge statistic:  t</a></li>
     </ul>
     </body>
     </html>""").format(os.path.join(args.basedatapath, args.experimentid, args.relativepath), os.path.join(args.basedatapath, args.experimentid, args.relativepath))
 
+            self.maxDiff = None # add this line so when checking difference here with subsequent assert if there is a 
+            # difference it will be displayed (not limited b/c of length)
             self.assertEqual(expected_html, html)
 
             
@@ -135,7 +137,7 @@ class TestPrepHeatmaps(unittest.TestCase):
             
             #saving the test versions of source_dir and test_id to variables and also creating a test id that won't be tested
             source_dir = os.path.join(wkdir,"source_test")
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             notthistest_id = "rnauasf"
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -145,9 +147,9 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             #creating files for the method to find and put into a list
 
-            expectedbasename1 = random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            expectedbasename2 = random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((notthistest_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            expectedbasename1 = random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            expectedbasename2 = random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((notthistest_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
             
 
 
@@ -170,7 +172,7 @@ class TestPrepHeatmaps(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_read_DGE_files wkdir:  {}\n \n ".format(wkdir))
             #creating testod and paths of the directories
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -178,8 +180,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
 
             dge_file_list = ph.find_DGE_files(source_dir, test_id)
 
@@ -196,7 +198,7 @@ class TestPrepHeatmaps(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_prepare_data_df: wkdir {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -204,8 +206,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
 
             dge_file_list = ph.find_DGE_files(source_dir, test_id)
 
@@ -230,7 +232,7 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             logger.debug("\n \n \n test_prepare_data_df: wkdir {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -238,8 +240,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
 
             dge_file_list = ph.find_DGE_files(source_dir, test_id)
 
@@ -269,7 +271,7 @@ class TestPrepHeatmaps(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_prepare_GCToo_object wkdir:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -277,8 +279,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
 
             dge_file_list = ph.find_DGE_files(source_dir, test_id)
 
@@ -298,7 +300,7 @@ class TestPrepHeatmaps(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_read_DGE_files wkdir:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -306,8 +308,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
 
             dge_file_list = ph.find_DGE_files(source_dir, test_id)
 
@@ -335,7 +337,7 @@ class TestPrepHeatmaps(unittest.TestCase):
             logger.debug("\n \n \n test_write_GCToo_objects_to_files wkdir:  {}\n \n ".format(wkdir))
             
             #creating file and a list to pass into read DGE_files
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -343,8 +345,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
 
             dge_file_list = ph.find_DGE_files(source_dir, test_id)
 
@@ -372,7 +374,7 @@ class TestPrepHeatmaps(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_prepare_links: wkdir {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -380,8 +382,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL1_TP1_PID_CL2_TP2_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_CL3_TP3_PID2_CL4_TP4_DGE_r30500x10.txt"),dge_data_test)
 
             dge_file_list = ph.find_DGE_files(source_dir, test_id)
 
@@ -420,7 +422,7 @@ class TestPrepHeatmaps(unittest.TestCase):
             logger.debug("\n \n \n test_write_to_html wkdir:  {}\n \n ".format(wkdir))
             #creating file and a list to pass into read DGE_files
 
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -428,8 +430,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(source_dir)
             os.mkdir(dge_data_test)
 
-            url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_logFC_r10x2.gct'.format(wkdir)), 
-            ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_t_r10x2.gct'.format(wkdir))]
+            url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\MYTESTID1234567_heatmap_logFC_r10x2.gct'.format(wkdir)), 
+            ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\MYTESTID1234567_heatmap_t_r10x2.gct'.format(wkdir))]
             output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id= test_id)
             
             html = ph.write_to_html(source_dir, output_html_link_file, url_list, test_id)
@@ -455,7 +457,7 @@ class TestPrepHeatmaps(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_write_html_to_file wkdir :  {}\n \n ".format(wkdir))
 
-            test_id ="H202SC20040591"
+            test_id ="MYTESTID1234567"
             source_dir = os.path.join(wkdir,"source_test")
             dge_data_test = os.path.join(source_dir, "dge_data")
 
@@ -465,8 +467,8 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             heatmap_dir = source_dir
 
-            url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_logFC_r10x2.gct'.format(wkdir)), 
-            ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_t_r10x2.gct'.format(wkdir))]
+            url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\MYTESTID1234567_heatmap_logFC_r10x2.gct'.format(wkdir)), 
+            ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\MYTESTID1234567_heatmap_t_r10x2.gct'.format(wkdir))]
 
             a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
             """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]

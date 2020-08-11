@@ -17,15 +17,14 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--verbose", "-v", help="Whether to print a bunch of output.", action="store_true", default=False)
-    parser.add_argument("--hostname", help="lims db host name", type=str, default="getafix-v")
 
-    parser.add_argument("--sourcedir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", type = str, required = True )
-    parser.add_argument("--experimentid", "-e", help = "id of the expirment", type = str, required = True)
+    parser.add_argument("--source_dir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", type = str, required = True )
+    parser.add_argument("--experiment_id", "-e", help = "id of the expirment", type = str, required = True)
     
-    parser.add_argument("--dgestatsforheatmaps", "-d", help = "dge stats for heatmaps",  default = ["logFC", "t"])
-    parser.add_argument("--basedatapath", "-b", help = "path to directory with experiment id in it", type = str, default = "/data/experiments/RNA_SEQ/")
-    parser.add_argument("--relativepath", "-r", help = "path from experiment id to where you want the heatmaps", type = str, default = "/analysis/heatmaps/")
-    parser.add_argument("--server", "-se", help = "server for the heatmaps to be put onto", type = str, default = "http://fht.samba.data/fht_morpheus.html?gctData=")
+    parser.add_argument("--dge_stats_for_heatmaps", "-d", help = "dge stats for heatmaps",  default = ["logFC", "t"])
+    parser.add_argument("--base_data_path", "-b", help = "path to directory with experiment id in it", type = str, default = "/data/experiments/RNA_SEQ/")
+    parser.add_argument("--relative_path", "-r", help = "path from experiment id to where you want the heatmaps", type = str, default = "/analysis/heatmaps/")
+    parser.add_argument("--base_url", "-u", help = "base url for the heatmaps to be put onto", type = str, default = "http://fht.samba.data/fht_morpheus.html?gctData=")
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
         type=str, default=summer2020py.default_config_filepath)
@@ -205,33 +204,33 @@ def write_html_to_file(a_lines, experiment_id, html_filepath):
 
 
 def main(args):
-    output_template = args.experimentid + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
+    output_template = args.experiment_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
     logger.debug("output_template{}".format(output_template))
     #the output template that will be used later 
 
-    #base_data_path = "{base_path}{exp_id}{relative_path}".format(base_path = args.basedatapath, exp_id= args.experimentid, relative_path = args.relativepath)
-    base_data_path = os.path.join(args.basedatapath, args.experimentid, args.relativepath)
+    #base_data_path = "{base_path}{exp_id}{relative_path}".format(base_path = args.base_data_path, exp_id= args.experiment_id, relative_path = args.relativepath)
+    base_data_path = os.path.join(args.base_data_path, args.experiment_id, args.relative_path)
     logger.debug(base_data_path)
     #where the data is 
 
-    url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
+    url_template = "{base_url}{{data_path}}".format(base_url = args.base_url)
     logger.debug("url_template: {}".format(url_template))
     #template for the urls that will be used later
 
-    output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id=args.experimentid)
+    output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id=args.experiment_id)
     logger.debug("output_html_link_file: {}".format(output_html_link_file))
     #the file name of the html file that will have all the urls for the heatmaps
 
-    heatmap_dir = prepare_output_dir(args.sourcedir)
+    heatmap_dir = prepare_output_dir(args.source_dir)
     #prpare the output directory 
 
-    dge_file_list = find_DGE_files(args.sourcedir, args.experimentid)
+    dge_file_list = find_DGE_files(args.source_dir, args.experiment_id)
     #finding the DGE files and saving them to dge file list
 
     dge_df_list = read_DGE_files(dge_file_list)
     #reading the DGE files and returning a list with the data instead of a list with csv in it
 
-    heatmap_gct_list = prepare_all_GCToo_objects(args.dgestatsforheatmaps, dge_df_list)
+    heatmap_gct_list = prepare_all_GCToo_objects(args.dge_stats_for_heatmaps, dge_df_list)
     #prpare GCToo objects
 
     write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
@@ -240,7 +239,7 @@ def main(args):
     url_list = prepare_links(heatmap_gct_list, url_template, base_data_path)
     #creating list of urls that will be added to file
 
-    html = write_to_html(heatmap_dir, output_html_link_file, url_list, args.experimentid)
+    html = write_to_html(heatmap_dir, output_html_link_file, url_list, args.experiment_id)
     #writing url list to html file
 
     return html

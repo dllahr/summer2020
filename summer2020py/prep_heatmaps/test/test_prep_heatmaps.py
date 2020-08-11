@@ -10,6 +10,7 @@ import pandas
 import cmapPy.pandasGEXpress.GCToo as GCToo
 import cmapPy.pandasGEXpress.write_gct as write_gct
 import random
+import pathlib
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
@@ -30,14 +31,13 @@ temp_wkdir_prefix = "test_prep_heatmaps"
 
    
 def random_of_input_file(name, dirs):
-    #do not believe this works as it should 
+    #this method was supposed to randomize the file at path, I couldn't get it to work so it just copies the file 
     path = os.path.join("assets", "prep_heatmap_example_input_DGE_r10x10.txt")
     outputpath = os.path.join(dirs, name)
     
-    with open(path) as f_input:
-        with open(outputpath, 'a') as f_output:
-            for line in f_input:
-                f_output.write(line)
+    shutil.copyfile(path, outputpath)
+
+    
 
         #one way is find a python touch method and use that to create an empty file 
         #if a file is not there touch creates it if the file is there it updates the timestame to the current timestamp
@@ -53,7 +53,7 @@ def random_of_input_file(name, dirs):
         #     with open(outputpath, 'a') as f_output:
         #         f_output.write(''.join(data))
 
-        return name
+    return name
                 
 
     
@@ -66,9 +66,9 @@ class TestPrepHeatmaps(unittest.TestCase):
             test_id = "H202SC20040591"
             base_path = wkdir
             relative_path = "heatmaps"
-            server = "http://fht.samba.data/fht_morpheus.html?gctData="
+            base_url = "http://fht.samba.data/fht_morpheus.html?gctData="
             source_dir = os.path.join(wkdir,"source_test")
-            dgestatsforheatmaps = ["logFC", "t"]
+            dge_stats_for_heatmaps = ["logFC", "t"]
             dge_data_test = os.path.join(source_dir, "dge_data")
 
             #creating directories
@@ -84,8 +84,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
         
             #simulate adding the commands on the command line using parser
-            args = ph.build_parser().parse_args(["-s", source_dir, "-e", test_id, "-d", dgestatsforheatmaps, "-b", 
-            base_path, "-r", relative_path, "-se", server])
+            args = ph.build_parser().parse_args(["-s", source_dir, "-e", test_id, "-d", dge_stats_for_heatmaps, "-b", 
+            base_path, "-r", relative_path, "-u", base_url])
 
 
             
@@ -98,7 +98,7 @@ class TestPrepHeatmaps(unittest.TestCase):
     <li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}\\H202SC20040591_heatmap_t_r10x2.gct"> heatmap of dge statistic:  t</a></li>
     </ul>
     </body>
-    </html>""").format(os.path.join(args.basedatapath, args.experimentid, args.relativepath), os.path.join(args.basedatapath, args.experimentid, args.relativepath))
+    </html>""").format(os.path.join(args.base_data_path, args.experiment_id, args.relative_path), os.path.join(args.base_data_path, args.experiment_id, args.relative_path))
 
             self.assertEqual(expected_html, html)
 
@@ -119,10 +119,10 @@ class TestPrepHeatmaps(unittest.TestCase):
             self.assertTrue(os.path.exists(heatmaps))  
 
             logger.debug("test that if we run the method and the directory exists, it is cleared out")
-            test_file = os.path.join(heatmaps, "test_file") #adding a file to that directory 
-            f = open(test_file,"w")#opening the file in write mode
-            f.write("1") #adding the number 1 to the file
-            f.close()#closing the file
+
+            test_file = os.path.join(heatmaps, "test_file")
+            
+            pathlib.Path(test_file).touch()
 
             ph.prepare_output_dir(wkdir)
             self.assertTrue(os.path.exists(heatmaps)) #making sure that the output directory was created
@@ -144,10 +144,14 @@ class TestPrepHeatmaps(unittest.TestCase):
             os.mkdir(dge_data_test)
 
             #creating files for the method to find and put into a list
+            test_file_path = os.path.join(dge_data_test, (test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"))
+            another_test_file_path = os.path.join(dge_data_test, (test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10_another.txt"))
+            not_test_file_path = os.path.join(dge_data_test, (notthistest_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"))
 
-            expectedbasename1 = random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            expectedbasename2 = random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((notthistest_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+
+            pathlib.Path(test_file_path).touch()
+            pathlib.Path(another_test_file_path).touch()
+            pathlib.Path(not_test_file_path).touch()
             
 
 
@@ -159,7 +163,7 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             #assert that the list has what you want in it
             self.assertTrue(len(dge_file_list) == 2)
-            expectedbasenameset = {expectedbasename1, expectedbasename2}
+            expectedbasenameset = {os.path.basename(test_file_path), os.path.basename(another_test_file_path)}
             r_basenameset = set([os.path.basename(x) for x in dge_file_list])
             self.assertEqual(expectedbasenameset, r_basenameset)
 
@@ -181,7 +185,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+            dge_file_list = ['{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt'.format(wkdir), 
+            '{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt'.format(wkdir)]
 
             dge_df_list = ph.read_DGE_files(dge_file_list)
             
@@ -190,6 +195,7 @@ class TestPrepHeatmaps(unittest.TestCase):
             self.assertTrue(len(dge_df_list) == 2)
             for dge_df, dge_file in dge_df_list:
                 self.assertListEqual(dge_df.columns.tolist(), expected_columns_list)
+                self.assertEqual((10,10), dge_df.shape)
             
 
     def test_prepare_data_df(self):
@@ -207,9 +213,16 @@ class TestPrepHeatmaps(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+            dge_file_list = ['{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt'.format(wkdir), 
+            '{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt'.format(wkdir)] 
 
-            dge_df_list = ph.read_DGE_files(dge_file_list)
+            dge_df_list = [
+            (
+            pandas.read_csv(dge_file, sep="\t", index_col=0),
+            os.path.basename(dge_file)
+            )
+            for dge_file in dge_file_list
+            ]
             dge_stat =  "logFC"
 
             data_df = ph.prepare_data_df(dge_stat, dge_df_list)
@@ -220,35 +233,21 @@ class TestPrepHeatmaps(unittest.TestCase):
             for item in data_df.columns.tolist():
                 list_ = item.split("_")
                 self.assertEqual(list_[0], dge_stat)
+            
+            self.assertEqual(data_df.columns.tolist(), ["logFC_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h","logFC_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h"])
  
-            #something to test that it worked
 
 
     def test_prepare_col_metadata(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_prepare_col_metadata: wkdir {}\n \n ".format(wkdir))
-
-            logger.debug("\n \n \n test_prepare_data_df: wkdir {}\n \n ".format(wkdir))
-            #creating file and a list to pass into read DGE_files
-            test_id ="H202SC20040591"
-            source_dir = os.path.join(wkdir,"source_test")
-            dge_data_test = os.path.join(source_dir, "dge_data")
-
-            #creating directories
-            os.mkdir(source_dir)
-            os.mkdir(dge_data_test)
-
-            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
-
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
-
-            dge_df_list = ph.read_DGE_files(dge_file_list)
+            
             dge_stat =  "logFC" 
 
-            data_df = ph.prepare_data_df(dge_stat, dge_df_list)
+            data_df_columns = ["logFC_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h","logFC_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h"]
             
-            col_metadata_df = ph.prepare_col_metadata(dge_stat, data_df.columns)
+            
+            col_metadata_df = ph.prepare_col_metadata(dge_stat, data_df_columns)
 
             for item in col_metadata_df.index.tolist():
                 list_ = item.split("_")
@@ -261,7 +260,10 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             self.assertTrue(dge_staritstic_there)
 
-            #something to test that the columns are correct  right now only check that one column is named dge_statistic
+            col_df_without_dge_stat = col_metadata_df.drop("dge_statistic", axis=1)
+
+            self.assertEqual(col_df_without_dge_stat.values.tolist(), [x.split("_") for x in data_df_columns])
+
 
 
     
@@ -280,9 +282,16 @@ class TestPrepHeatmaps(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+            dge_file_list = ['{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt'.format(wkdir), 
+            '{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt'.format(wkdir)] 
 
-            dge_df_list = ph.read_DGE_files(dge_file_list)
+            dge_df_list = [
+            (
+            pandas.read_csv(dge_file, sep="\t", index_col=0),
+            os.path.basename(dge_file)
+            )
+            for dge_file in dge_file_list
+            ]
             dge_stat = "logFC"
         
             heatmap_g = ph.prepare_GCToo_object(dge_stat, dge_df_list)
@@ -309,9 +318,16 @@ class TestPrepHeatmaps(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+            dge_file_list = ['{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt'.format(wkdir), 
+            '{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt'.format(wkdir)] 
 
-            dge_df_list = ph.read_DGE_files(dge_file_list)
+            dge_df_list = [
+            (
+            pandas.read_csv(dge_file, sep="\t", index_col=0),
+            os.path.basename(dge_file)
+            )
+            for dge_file in dge_file_list
+            ]
             dge_stats_for_heatmaps = ["logFC", "t"]
 
             heatmap_gct_list = ph.prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
@@ -346,11 +362,17 @@ class TestPrepHeatmaps(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+            dge_file_list = ['{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt'.format(wkdir), 
+            '{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt'.format(wkdir)] 
 
-            dge_df_list = ph.read_DGE_files(dge_file_list)
+            dge_df_list = [
+            (
+            pandas.read_csv(dge_file, sep="\t", index_col=0),
+            os.path.basename(dge_file)
+            )
+            for dge_file in dge_file_list
+            ]
             dge_stats_for_heatmaps = ["logFC", "t"]
-            dge_df_list = ph.read_DGE_files(dge_file_list)
 
             heatmap_gct_list = ph.prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
             
@@ -383,11 +405,17 @@ class TestPrepHeatmaps(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+            dge_file_list = ['{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt'.format(wkdir), 
+            '{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt'.format(wkdir)] 
 
-            dge_df_list = ph.read_DGE_files(dge_file_list)
+            dge_df_list = [
+            (
+            pandas.read_csv(dge_file, sep="\t", index_col=0),
+            os.path.basename(dge_file)
+            )
+            for dge_file in dge_file_list
+            ]
             dge_stats_for_heatmaps = ["logFC", "t"]
-            dge_df_list = ph.read_DGE_files(dge_file_list)
 
             heatmap_gct_list = ph.prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list)
             

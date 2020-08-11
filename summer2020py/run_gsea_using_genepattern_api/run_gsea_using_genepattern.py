@@ -399,34 +399,49 @@ def main(args):
 
 
     gsea_dir, rnk_dir = prepare_output_dir(source_dir)
+    #prepare the output directories
 
     dge_file_list = find_DGE_files(source_dir, experiment_id)
+    #find the dge files in source dir
 
     input_rnk_files_list = build_all_rnk_files(dge_file_list, dge_stats_for_rnk_list, rnk_dir)
+    #create the rnk files from the dge data 
 
     gpserver = create_gp_server(gp_url, gp_username, gp_password)
+    #create the gpserver
 
     input_gp_files_list = upload_input_gp_files(input_rnk_files_list, gpserver)
+    #upload all the gp files to the gp server and save results to a list
 
     gsea_preranked_module = task_list(gpserver)
+    #get the task list and  get the preranked tasks
 
     params_list = create_params_list(gsea_preranked_module)
+    #create params list, inside also print out a bunch of information about params list
 
     reference_geneset_urls = create_reference_geneset_urls(params_list, reference_genesets)
+    #create reference genest urls
 
     all_job_spec_list = create_all_job_spec_list(num_permutations, job_memory, input_gp_files_list, reference_geneset_urls, gsea_preranked_module)
+    #create the all job spec list, 
 
     print_all_job_spec_list(all_job_spec_list)
+    #this could be called at then end of all job spec list but it just prints out infomation about all job spec list
 
     job_list = create_job_list(all_job_spec_list, gpserver)
+    #create job list and do the jobs
 
     zip_dir = create_zip_dir(gsea_dir)
+    #create the directory for the zipped files
 
     zip_files_list, no_zip_files = prepare_zip_files_list(job_list, zip_dir)
+    #seperate the files into those that will be zipped and those that will not be zipped
 
     print_no_zip_flies(no_zip_files)
+    #print out the files that won't be zipped
 
     zipping_zip_files(zip_files_list, gsea_dir)
+    #zip the files that will be zipped
 
 
 

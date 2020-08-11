@@ -421,7 +421,7 @@ class TestPrepHeatmaps(unittest.TestCase):
             
             heatmap_dir = source_dir
 
-            #should not be this, will fix later
+            
             base_data_path = wkdir
 
             output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
@@ -440,27 +440,17 @@ class TestPrepHeatmaps(unittest.TestCase):
                 i += 1
 
 
+
             
-    
-
-    def test_write_to_html(self):
+    def test_prepare_html(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_write_to_html wkdir:  {}\n \n ".format(wkdir))
-            #creating file and a list to pass into read DGE_files
+            logger.debug("\n \n \n test_prepare_html wkdir :  {}\n \n ".format(wkdir))
 
-            test_id ="H202SC20040591"
-            source_dir = os.path.join(wkdir,"source_test")
-            dge_data_test = os.path.join(source_dir, "dge_data")
-
-            #creating directories
-            os.mkdir(source_dir)
-            os.mkdir(dge_data_test)
+            test_id = "H202SC20040591"
 
             url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_logFC_r10x2.gct'.format(wkdir)), 
             ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_t_r10x2.gct'.format(wkdir))]
             output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id= test_id)
-            
-            html = ph.write_to_html(source_dir, output_html_link_file, url_list, test_id)
 
             a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
     """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]
@@ -474,47 +464,40 @@ class TestPrepHeatmaps(unittest.TestCase):
     </body>
     </html>"""
     )
-            self.assertEqual(html, expected_html)
+        
+        html = ph.prepare_html(url_list, test_id)
+
+        self.assertEqual(html, expected_html)
 
 
-            
+    def test_determine_html_filepath(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_determine_html_filepath wkdir :  {}\n \n ".format(wkdir))
+
+            html_file_name = "html_file"
+
+            html_filepath = ph.determine_html_filepath(wkdir, html_file_name)
+
+            self.assertEqual(html_filepath, os.path.join(wkdir, html_file_name))
+
+            #determine_html_filepath is just a join statment
+
+
+
 
     def test_write_html_to_file(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_write_html_to_file wkdir :  {}\n \n ".format(wkdir))
 
-            test_id ="H202SC20040591"
-            source_dir = os.path.join(wkdir,"source_test")
-            dge_data_test = os.path.join(source_dir, "dge_data")
+            html_filepath = os.path.join(wkdir, "html_file")
 
-            #creating directories
-            os.mkdir(source_dir)
-            os.mkdir(dge_data_test)
+            ph.write_html_to_file("hi", html_filepath)
 
-            heatmap_dir = source_dir
+            self.assertTrue(os.path.exists(html_filepath))
 
-            url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_logFC_r10x2.gct'.format(wkdir)), 
-            ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}\\H202SC20040591_heatmap_t_r10x2.gct'.format(wkdir))]
+            with open(html_filepath) as html_file:
+                self.assertTrue("hi" in html_file)
 
-            a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
-            """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]
-
-            output_html_link_file = "{exp_id}_interactive_heatmap_links.html".format(exp_id=test_id)
-
-            html_filepath = os.path.join(heatmap_dir, output_html_link_file)
-
-            html = ph.write_html_to_file(a_lines, test_id, html_filepath)
-
-            expected_html = ("""<html>
-    <body>
-    <h1>{exp_id} links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
-    <ul>""".format(exp_id=test_id)
-    + "".join(a_lines)
-    + """</ul>
-    </body>
-    </html>"""
-    )
-            self.assertEqual(html, expected_html)
             
             
 

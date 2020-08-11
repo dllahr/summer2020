@@ -169,20 +169,11 @@ def prepare_links(heatmap_gct_list, url_template, base_data_path):
     logger.debug("url_list: \n{}".format(url_list))
     return url_list
 
-def write_to_html(heatmap_dir, output_html_link_file, url_list, experiment_id):
-    html_filepath = os.path.join(heatmap_dir, output_html_link_file)
-    logger.debug("html_filepath: {}".format(html_filepath))
-    logger.debug("")
 
+def prepare_html(url_list, experiment_id):
     a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
     """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]
 
-    html = write_html_to_file(a_lines, experiment_id, html_filepath)
-
-    return html
-
-
-def write_html_to_file(a_lines, experiment_id, html_filepath):
     html = ("""<html>
     <body>
     <h1>{exp_id} links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
@@ -192,15 +183,24 @@ def write_html_to_file(a_lines, experiment_id, html_filepath):
     </body>
     </html>"""
     )
-
     logger.debug(html)
     logger.debug("")
-    
+
+    return html
+
+def determine_html_filepath(heatmap_dir, output_html_link_file):
+    html_filepath = os.path.join(heatmap_dir, output_html_link_file)
+    logger.debug("html_filepath: {}".format(html_filepath))
+    logger.debug("")
+
+    return html_filepath
+
+
+def write_html_to_file(html, html_filepath):
+    logger.debug("writing html to html_filepath")
     f = open(html_filepath, "w")
     f.write(html)
     f.close()
-
-    return html
 
 
 def main(args):
@@ -239,8 +239,14 @@ def main(args):
     url_list = prepare_links(heatmap_gct_list, url_template, base_data_path)
     #creating list of urls that will be added to file
 
-    html = write_to_html(heatmap_dir, output_html_link_file, url_list, args.experiment_id)
-    #writing url list to html file
+    html_filepath = determine_html_filepath(heatmap_dir, output_html_link_file)
+    #creating the filepath to where the html file will be
+
+    html =  prepare_html(url_list, args.experiment_id)
+    #creating the html that will be written to the file
+
+    write_html_to_file(html, html_filepath)
+    #writing the html to the file
 
     return html
 

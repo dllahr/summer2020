@@ -37,10 +37,49 @@ def random_of_input_file(name, dirs):
     shutil.copyfile(path, outputpath)
 
     return name
-    
-def return_file_basename(file_name):
-    return os.path.basename(file_name)
 
+def create_mock_task(name, mocked_lsid):
+    task = mock.Mock("mock of task")
+    task.get_name = mock.Mock("mock of get_name of the task", return_value = str(name))
+    task.name = str(name)
+    task.lsid = mocked_lsid
+    #a better mock may have task.lsid return something 
+    return task
+    
+def create_mock_tasks_list(number):
+    mock_task_list = []
+    
+    mock_task_list.append(create_mock_task("GSEAPreranked", 100))
+
+    return mock_task_list
+
+
+
+def create_param(information):
+    param = mock.Mock("mock of param")
+    param.get_name = mock.Mock("mock of get name", return_value = information[0])
+    param.get_type = mock.Mock("mock of get type", return_value = information[1])
+    param.get_description = mock.Mock("mock of get description", return_value = information[2])
+    param.get_default_value = mock.Mock("mock of get deault value", return_value = information[3])
+    param.is_optional = mock.Mock("mock of is optional", return_value = information[4])
+    param.is_choice_param = mock.Mock("mock of is choice param", return_value = information[5])
+    if information[5]:
+        param.get_choices = mock.Mock("mock of get choice", return_value = information[6])
+        param.get_choice_selected_value = mock.Mock("mock of get choice seleced value", return_value = information[7])
+
+def create_params_list_mock():
+    mock_param_list = []
+
+    genesetsdatabase = ["gene.sets.database", "file", "Gene sets database from GSEA website.", "None", False, False]
+    #is choice param is set to false, despite gene.sets.database having true since the tests don't need to choices and I don't want to take the time to put them in if I don't need to
+    
+    mock_param_list.append(create_param(genesetsdatabase))
+
+    return mock_param_list
+
+
+        
+    
 
 
 class TestRunGseaUsingGenepattern(unittest.TestCase):
@@ -53,7 +92,23 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         global gpserver_object 
         gpserver_object = mock.Mock("this mock of the gpserver object")
         
-        gp.GPServer = MagicMock("mock of gp.GPServer", return_value = gpserver_object)
+        gp.GPServer = mock.Mock("mock of gp.GPServer", return_value = gpserver_object)
+
+        gsea_preranked_module = mock.Mock("mock of gp preanked modoule creaked from GPTask")
+        gsea_preranked_module.params_load = mock.Mock("mock of params_load")
+        gsea_preranked_module.get_parameters = mock.Mock("mock of get parameter", return_value = create_params_list_mock()) 
+
+        gp.GPTask = mock.Mock("mock of GPTask", return_value = gsea_preranked_module)
+        
+
+        uploaded_gp_file = mock.Mock("mock returned when .upload file is called")
+        uploaded_gp_file.get_url = mock.Mock("mock of get url", return_value = "google.com")
+
+        gpserver_object.upload_file = mock.Mock("mock of upload file", return_value = uploaded_gp_file)
+
+        gpserver_object.get_task_list = mock.Mock("mock of get task list", return_value = create_mock_tasks_list(1))
+
+
 
         
 
@@ -223,20 +278,25 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
             logger.debug("\n \n \n test_upload_input_gp_files wkdir:  {}\n \n ".format(wkdir))
 
-            
-
             test_file_path = os.path.join(wkdir, "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt")
-            another_test_file_path = os.path.join(wkdir, "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10_another.txt")
+            another_test_file_path = os.path.join(wkdir, "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt")
 
             test_input_files = [test_file_path, another_test_file_path]
 
             rgug.upload_input_gp_files(test_input_files, gpserver_object)
 
-            logger.debug(logger.debug("gp.GPServer.call_args {}".format(gp.GPServer.call_args)))
+            call_args_list = gpserver_object.upload_file.call_args_list
+
+            self.assertEqual(call_args_list[0][0], (os.path.basename(test_file_path), test_file_path))
+            self.assertEqual(call_args_list[1][0], (os.path.basename(another_test_file_path), another_test_file_path))
+            
+            
 
     def test_task_list(self):
-        # check that gsea_preranked_module is as it should be / has expected things in it
-        pass
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_task_list wkdir:  {}\n \n ".format(wkdir))
+
+            rgug.task_list(gpserver_object)
 
     def test_create_params_list(self):
         #should be simple as it's three lines of code as test that the mock is called once and that's that

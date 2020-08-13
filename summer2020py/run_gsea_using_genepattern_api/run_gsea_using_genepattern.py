@@ -146,6 +146,8 @@ def task_list(gpserver):
 
 def create_params_list(gsea_preranked_module):
     # Get the list of GPTaskParam objects
+    gsea_preranked_module.param_load()
+
     params_list = gsea_preranked_module.get_parameters()
 
     print_param_info(params_list)

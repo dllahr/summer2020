@@ -5,11 +5,17 @@ import summer2020py.run_gsea_using_genepattern_api.run_gsea_using_genepattern as
 import os
 import tempfile
 import pandas
+import mock
+from unittest.mock import MagicMock
+import shutil
+import pathlib
+
+
+import gp
+
 
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
-
-temp_wkdir_prefix = "test_run_gsea_using_genepattern"
 
 # Some notes on testing conventions (more in cuppers convention doc):
 #    (1) Use "self.assert..." over "assert"
@@ -24,20 +30,36 @@ temp_wkdir_prefix = "test_run_gsea_using_genepattern"
 #
 #        self.assertAlmostEquals(...) for comparing floats
 def random_of_input_file(name, dirs):
-    #do not believe this works as it should 
+    #this method was supposed to randomize the file at path, I couldn't get it to work so it just copies the file 
     path = os.path.join("assets", "prep_heatmap_example_input_DGE_r10x10.txt")
     outputpath = os.path.join(dirs, name)
-    
-    with open(path) as f_input:
-        with open(outputpath, 'a') as f_output:
-            for line in f_input:
-                f_output.write(line)
-        return name
 
+    shutil.copyfile(path, outputpath)
+
+    return name
+    
+def return_file_basename(file_name):
+    return os.path.basename(file_name)
 
 
 
 class TestRunGseaUsingGenepattern(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        global temp_wkdir_prefix 
+        temp_wkdir_prefix = "test_run_gsea_using_genepattern"
+
+        logger.debug("setUpClass")
+        global gpserver_object 
+        gpserver_object = mock.Mock("this mock of the gpserver object")
+        
+        gp.GPServer = MagicMock("mock of gp.GPServer", return_value = gpserver_object)
+
+        
+
+        
+
+
     def test_main(self):
         pass
 
@@ -116,9 +138,15 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            gsea_dir, rnk_dir = rgug.prepare_output_dir(source_dir)
+            gsea_dir = os.path.join(source_dir, "gsea")
+            os.mkdir(gsea_dir)
+            rnk_dir = os.path.join(gsea_dir, "rnk")
+            os.mkdir(rnk_dir)
             
-            dge_file_list = rgug.find_DGE_files(source_dir, test_id)
+            dge_file_list = ['{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt'.format(wkdir), 
+            '{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt'.format(wkdir)]
+
+            #will fix this to not rely on other methods
 
             dge_stats_for_rnk_list = ["logFC", "t"]
 
@@ -145,9 +173,13 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
             random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            gsea_dir, rnk_dir = rgug.prepare_output_dir(source_dir)
+            gsea_dir = os.path.join(source_dir, "gsea")
+            os.mkdir(gsea_dir)
+            rnk_dir = os.path.join(gsea_dir, "rnk")
+            os.mkdir(rnk_dir)
             
-            dge_file_list = rgug.find_DGE_files(source_dir, test_id)
+            dge_file_list = ['{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt'.format(wkdir), 
+            '{}\\source_test\\dge_data\\H202SC20040591_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt'.format(wkdir)]
 
             dge_file = dge_file_list[0]
             
@@ -170,14 +202,37 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         #create a mock
         #call the method, It will not actually create a server, just return whatever the method should return
         #assert that the server creation thing was called once
-        pass 
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_create_gp_server wkdir:  {}\n \n ".format(wkdir))
+
+            returned_gpserver = rgug.create_gp_server("place.com", "usename", "password")
+
+            self.assertEqual(returned_gpserver, gpserver_object)
+            self.assertEqual(gp.GPServer.call_count, 1)
+            logger.debug("gp.GPServer.call_args {}".format(gp.GPServer.call_args))
+            self.assertEqual(gp.GPServer.call_args_list[0][0],("place.com", "usename", "password") )
+
+        
+
 
     def test_upload_input_gp_files(self):
         #check that for for every file in input_rnk_file_list, there is a url that has it's basename at the ending
         #something like this
         # for file in input_rnk_file_list
         #    self.assertEquasl("*" + os.path.basename(file), (someting fron url list)
-        pass
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_upload_input_gp_files wkdir:  {}\n \n ".format(wkdir))
+
+            
+
+            test_file_path = os.path.join(wkdir, "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt")
+            another_test_file_path = os.path.join(wkdir, "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10_another.txt")
+
+            test_input_files = [test_file_path, another_test_file_path]
+
+            rgug.upload_input_gp_files(test_input_files, gpserver_object)
+
+            logger.debug(logger.debug("gp.GPServer.call_args {}".format(gp.GPServer.call_args)))
 
     def test_task_list(self):
         # check that gsea_preranked_module is as it should be / has expected things in it

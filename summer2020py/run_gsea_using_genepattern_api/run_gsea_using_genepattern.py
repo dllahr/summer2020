@@ -109,7 +109,8 @@ def create_gp_server(gp_url, gp_username, gp_password):
     return gpserver
 
 def upload_input_gp_files(input_rnk_files_list, gpserver):
-    # upload input files
+    # upload input filesconda activate compbio
+    
     input_gp_files_list = []
 
     for input_file in input_rnk_files_list:

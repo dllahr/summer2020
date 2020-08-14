@@ -81,6 +81,7 @@ def create_genesetsdatabase_choices():
     return choices
 
 
+
 def create_param(information):
     param = mock.Mock("mock of param")
     param.get_name = mock.Mock("mock of get name", return_value = information[0])
@@ -106,7 +107,36 @@ def create_params_list_mock():
 
     return mock_param_list
 
+def job_params_list():
+    job_list = [{'name': 'job.memory', 'values': ['4 Gb']},
+    {'name': 'number.of.permutations', 'values': ['1000']},
+    {'name': 'collapse.dataset', 'values': ['No_Collapse']},
+    {'name': 'scoring.scheme', 'values': ['weighted']},
+    {'name': 'max.gene.set.size', 'values': ['500']},
+    {'name': 'min.gene.set.size', 'values': ['15']},
+    {'name': 'collapsing.mode.for.probe.sets.with.more.than.one.match',
+    'values': ['Max_probe']},
+    {'name': 'normalization.mode', 'values': ['meandiv']},
+    {'name': 'omit.features.with.no.symbol.match', 'values': ['true']},
+    {'name': 'make.detailed.gene.set.report', 'values': ['true']},
+    {'name': 'num.top.sets', 'values': ['20']},
+    {'name': 'random.seed', 'values': ['timestamp']},
+    {'name': 'create.svgs', 'values': ['false']},
+    {'name': 'output.file.name', 'values': ['<ranked.list_basename>.zip']},
+    {'name': 'create.zip', 'values': ['true']},
+    {'name': 'dev.mode', 'values': ['false']},
+    {'name': 'ranked.list',
+    'values': ['https://cloud.genepattern.org/gp/users/dllahr/tmp/run5687728369687963663.tmp/H202SC20040591_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_logFC_r30144x2.rnk']},
+    {'name': 'gene.sets.database',
+    'values': ['ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c1.all.v7.1.symbols.gmt',
+    'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.all.v7.1.symbols.gmt',
+    'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c3.all.v7.1.symbols.gmt',
+    'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c5.all.v7.1.symbols.gmt',
+    'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c6.all.v7.1.symbols.gmt',
+    'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c7.all.v7.1.symbols.gmt',
+    'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt']}]
 
+    return job_list
         
     
 
@@ -121,9 +151,10 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         global gpserver_object 
         gpserver_object = mock.Mock("this mock of the gpserver object")
 
-
+        global job_spec
         job_spec = mock.Mock("mock of job_spec")
         job_spec.set_parameter = mock.Mock("mock of set paramter of job spec")
+        job_spec.params = mock.Mock("spec of params", return_value = job_params_list())
 
         
         gp.GPServer = mock.Mock("mock of gp.GPServer", return_value = gpserver_object)
@@ -141,9 +172,9 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         
         gp.GPTask = mock.Mock("mock of GPTask", return_value = gsea_preranked_module)
         
-
+        global uploaded_gp_file
         uploaded_gp_file = mock.Mock("mock returned when .upload file is called")
-        uploaded_gp_file.get_url = mock.Mock("mock of get url", return_value = "google.com")
+        uploaded_gp_file.get_url = mock.Mock("mock of get url", return_value = "this is a placeholder hopefully your code doesn't rely on this for anything")
 
         gpserver_object.upload_file = mock.Mock("mock of upload file", return_value = uploaded_gp_file)
 
@@ -325,7 +356,7 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
             test_input_files = [test_file_path, another_test_file_path]
 
             rgug.upload_input_gp_files(test_input_files, gpserver_object)
-
+            
             call_args_list = gpserver_object.upload_file.call_args_list
 
             self.assertEqual(call_args_list[0][0], (os.path.basename(test_file_path), test_file_path))
@@ -394,7 +425,45 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
 
             reference_geneset_urls  = rgug.create_reference_geneset_urls(create_params_list_mock(), reference_genesets)
 
+            logger.debug("reference_geneset_urls\n {}".format(reference_geneset_urls))
+
             self.assertEqual(len(reference_geneset_urls), 2)
+
+
+    def test_create_all_job_spec_list(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_create_all_job_spec_list wkdir:  {}\n \n ".format(wkdir))
+
+            reference_geneset_urls = [('all', ['ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c1.all.v7.1.symbols.gmt', 
+            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.all.v7.1.symbols.gmt', 
+            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c3.all.v7.1.symbols.gmt', 
+            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c5.all.v7.1.symbols.gmt', 
+            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c6.all.v7.1.symbols.gmt', 
+            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c7.all.v7.1.symbols.gmt', 
+            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt']), 
+            ('just_hallmarks', ['ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt'])]
+
+            num_permutations = 1000
+
+            job_memory = "4 Gb"
+
+            input_gp_files_list = [uploaded_gp_file, uploaded_gp_file]
+
+            rgug.create_all_job_spec_list(num_permutations, job_memory, input_gp_files_list, reference_geneset_urls, gsea_preranked_module)
+
+        
+    def test_print_all_job_spec_list(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \ntest_print_all_job_spec_list wkdir:  {}\n \n ".format(wkdir))
+
+            all_job_spec_list =  [('all',job_spec), 
+            ('just_hallmarks', job_spec), 
+            ('all', job_spec), 
+            ('just_hallmarks', job_spec)]
+
+            rgug.print_all_job_spec_list(all_job_spec_list)
+        
+
 
 
 

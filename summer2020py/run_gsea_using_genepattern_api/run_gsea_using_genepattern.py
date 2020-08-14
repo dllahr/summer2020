@@ -252,8 +252,8 @@ def create_all_job_spec_list(num_permutations, job_memory, input_gp_files_list, 
 def print_all_job_spec_list(all_job_spec_list):
     logger.debug("all_job_spec_list[0][0]: {}".format(all_job_spec_list[0][0]))
     t = all_job_spec_list[0][1]
-    dir(t)
-    t.params
+    logger.debug("dir(t){}".format(dir(t)))
+    logger.debug("t.params {}".format(t.params))
 
 
 def create_job_list(all_job_spec_list, gpserver):

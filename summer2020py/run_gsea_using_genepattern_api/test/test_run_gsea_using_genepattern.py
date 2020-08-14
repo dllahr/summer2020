@@ -54,6 +54,32 @@ def create_mock_tasks_list(number):
     return mock_task_list
 
 
+def create_genesetsdatabase_choices():
+    choices = []
+    choices.append({'label': "GSEAPrerankedlabel", 'value': "GSEAPrerankedvalue"})
+    choices.append({'label': "c1.all.v7.1.symbols.gmt [Positional]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c1.all.v7.1.symbols.gmt"})
+    choices.append({'label': "c2.all.v7.1.symbols.gmt [Curated]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.all.v7.1.symbols.gmt"})
+    choices.append({'label': "c2.cgp.v7.1.symbols.gmt [Curated]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.cgp.v7.1.symbols.gmt"})
+    choices.append({'label': "c2.cp.v7.1.symbols.gmt [Curated]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.cp.v7.1.symbols.gmt"})
+    choices.append({'label': "c2.cp.biocarta.v7.1.symbols.gmt [Curated] ", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.cp.biocarta.v7.1.symbols.gmt"})
+    choices.append({'label': "c2.cp.kegg.v7.1.symbols.gmt [Curated]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.cp.kegg.v7.1.symbols.gmt"})
+    choices.append({'label': "c2.cp.pid.v7.1.symbols.gmt [Curated]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.cp.pid.v7.1.symbols.gmt"})
+    choices.append({'label': "c2.cp.reactome.v7.1.symbols.gmt [Curated]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.cp.reactome.v7.1.symbols.gmt"})
+    choices.append({'label': "c3.all.v7.1.symbols.gmt [Motif]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c3.all.v7.1.symbols.gmt"})
+    choices.append({'label': "c3.mir.v7.1.symbols.gmt [Motif]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c3.mir.v7.1.symbols.gmt"})
+    choices.append({'label': "c3.tft.v7.1.symbols.gmt [Motif]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c3.tft.v7.1.symbols.gmt"})
+    choices.append({'label': "c4.all.v7.1.symbols.gmt [Computational]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c4.all.v7.1.symbols.gmt"})
+    choices.append({'label': "c4.cgn.v7.1.symbols.gmt [Computational]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c4.cgn.v7.1.symbols.gmt"})
+    choices.append({'label': "c4.cm.v7.1.symbols.gmt [Computational]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c4.cm.v7.1.symbols.gmt"})
+    choices.append({'label': "c5.all.v7.1.symbols.gmt [Gene Ontology]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c5.all.v7.1.symbols.gmt"})
+    choices.append({'label': "c5.bp.v7.1.symbols.gmt [Gene Ontology]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c5.bp.v7.1.symbols.gmt"})
+    choices.append({'label': "c5.cc.v7.1.symbols.gmt [Gene Ontology]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c5.cc.v7.1.symbols.gmt"})
+    choices.append({'label': "c5.mf.v7.1.symbols.gmt [Gene Ontology]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c5.mf.v7.1.symbols.gmt"})
+    choices.append({'label': "c6.all.v7.1.symbols.gmt [Oncogenic Signatures]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c6.all.v7.1.symbols.gmt"})
+    choices.append({'label': "c7.all.v7.1.symbols.gmt [Immunologic signatures]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c7.all.v7.1.symbols.gmt"})
+    choices.append({'label': "h.all.v7.1.symbols.gmt [Hallmarks]", 'value': "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt"})
+    return choices
+
 
 def create_param(information):
     param = mock.Mock("mock of param")
@@ -67,11 +93,14 @@ def create_param(information):
         param.get_choices = mock.Mock("mock of get choice", return_value = information[6])
         param.get_choice_selected_value = mock.Mock("mock of get choice seleced value", return_value = information[7])
 
+    return param
+
 def create_params_list_mock():
     mock_param_list = []
 
-    genesetsdatabase = ["gene.sets.database", "file", "Gene sets database from GSEA website.", "None", False, False]
-    #is choice param is set to false, despite gene.sets.database having true since the tests don't need to choices and I don't want to take the time to put them in if I don't need to
+    genesetsdatabase = ["gene.sets.database", "file", "Gene sets database from GSEA website.", "None",False,  True,
+    create_genesetsdatabase_choices() , "ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c1.all.v7.1.symbols.gmt"]
+
     
     mock_param_list.append(create_param(genesetsdatabase))
 
@@ -91,13 +120,25 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         logger.debug("setUpClass")
         global gpserver_object 
         gpserver_object = mock.Mock("this mock of the gpserver object")
+
+
+        job_spec = mock.Mock("mock of job_spec")
+        job_spec.set_parameter = mock.Mock("mock of set paramter of job spec")
+
         
         gp.GPServer = mock.Mock("mock of gp.GPServer", return_value = gpserver_object)
 
+
+
+
+        global gsea_preranked_module
         gsea_preranked_module = mock.Mock("mock of gp preanked modoule creaked from GPTask")
-        gsea_preranked_module.params_load = mock.Mock("mock of params_load")
+        gsea_preranked_module.param_load = mock.Mock("mock of params_load")
         gsea_preranked_module.get_parameters = mock.Mock("mock of get parameter", return_value = create_params_list_mock()) 
 
+        gsea_preranked_module.make_job_spec = mock.Mock("mock of make job spec", return_value = job_spec)
+
+        
         gp.GPTask = mock.Mock("mock of GPTask", return_value = gsea_preranked_module)
         
 
@@ -298,9 +339,65 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
 
             rgug.task_list(gpserver_object)
 
+            gp.GPTask.assert_called_once_with(gpserver_object, 100)
+
     def test_create_params_list(self):
-        #should be simple as it's three lines of code as test that the mock is called once and that's that
-        pass
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_create_params_list wkdir:  {}\n \n ".format(wkdir))
+
+            rgug.create_params_list(gsea_preranked_module)
+
+            gsea_preranked_module.param_load.assert_called_once
+
+            gsea_preranked_module.get_parameters.assert_called_once
+
+
+    def test_print_param_info(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_print_param_info wkdir:  {}\n \n ".format(wkdir))
+
+            params_list = create_params_list_mock()
+            
+            rgug.print_param_info(params_list)
+
+            params_list[0].get_name.assert_called_once
+            params_list[0].get_type.assert_called_once
+            params_list[0].get_description.assert_called_once
+            params_list[0].get_default_value.assert_called_once
+            params_list[0].is_optional.assert_called_once
+
+    def test_print_valid_param_choices(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_print_valid_param_choices wkdir:  {}\n \n ".format(wkdir))
+
+            params_list = create_params_list_mock()
+
+            rgug.print_valid_param_choices(params_list)
+
+            params_list[0].get_name.assert_called_once
+            params_list[0].get_choice_selected_value.assert_called_once
+
+
+    
+
+
+    def test_create_reference_geneset_urls(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_create_reference_geneset_urls wkdir:  {}\n \n ".format(wkdir))
+
+            reference_genesets = [
+            ("all", {"c1.all.v7.1.symbols.gmt [Positional]", "c2.all.v7.1.symbols.gmt [Curated]", "c3.all.v7.1.symbols.gmt [Motif]",
+            "c5.all.v7.1.symbols.gmt [Gene Ontology]", "c6.all.v7.1.symbols.gmt [Oncogenic Signatures]",
+            "c7.all.v7.1.symbols.gmt [Immunologic signatures]", "h.all.v7.1.symbols.gmt [Hallmarks]"}),
+            ("just_hallmarks", {"h.all.v7.1.symbols.gmt [Hallmarks]"})
+            ]
+
+            reference_geneset_urls  = rgug.create_reference_geneset_urls(create_params_list_mock(), reference_genesets)
+
+            self.assertEqual(len(reference_geneset_urls), 2)
+
+
+
             
 
             

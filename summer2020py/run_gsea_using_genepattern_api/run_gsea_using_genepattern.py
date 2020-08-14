@@ -199,7 +199,7 @@ def create_reference_geneset_urls(params_list, reference_genesets):
 
     logger.debug(" ")
     logger.debug("len(reference_geneset_urls): {}".format(len(reference_geneset_urls)))
-    logger.debgug("\n\n {}".format([str(x) for x in reference_geneset_urls]))
+    logger.debug("\n\n {}".format([str(x) for x in reference_geneset_urls]))
 
     return reference_geneset_urls
 

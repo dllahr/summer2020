@@ -6,9 +6,9 @@ import os
 import tempfile
 import pandas
 import mock
-from unittest.mock import MagicMock
 import shutil
 import pathlib
+import zipfile
 
 
 import gp
@@ -137,8 +137,7 @@ def job_params_list():
     'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt']}]
 
     return job_list
-        
-    
+
 
 
 class TestRunGseaUsingGenepattern(unittest.TestCase):
@@ -181,14 +180,38 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         gpserver_object.get_task_list = mock.Mock("mock of get task list", return_value = create_mock_tasks_list(1))
 
 
+        opened_output_file = mock.Mock("mock of the open output file")
+        opened_output_file.read = mock.Mock("mock of read the opened output file", return_value = b"hi")
+
+        global output_file
+        output_file = mock.Mock("mock of the output file returned when get output files is called")
+        output_file.get_url = mock.Mock("mock of get url", return_value = "a url should be here")
+        output_file.get_name = mock.Mock("mock of get name", return_value = "file.zip")
+        output_file.open = mock.Mock("mock of open", return_value = opened_output_file)
+       
+
+
+
+        global job
+        job = mock.Mock("mock of job")
+        
+        job.job_number = 1
+        job.get_output_files = mock.Mock("mock of get outputfiles", return_value = [output_file])
+        job.get_status_message = mock.Mock("mock of job get status message", return_value = "this is the staus message")
+        job.is_finished = mock.Mock("mock of job is finished", return_value = True)
+        job.wait_until_done = mock.Mock("mock of wait until done, does nothing when called")
+        job.job_number = mock.Mock("mock of job number", return_value = "1")
+        job.get_job_status_url = mock.Mock("mock of get staus url", return_value = "mockstatusurl")
+
+
+        gpserver_object.run_job = mock.Mock("mock of run job", return_value = job)
+
 
         
 
-        
 
 
-    def test_main(self):
-        pass
+
 
     def test_prepare_output_directory(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
@@ -329,15 +352,18 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         #create a mock
         #call the method, It will not actually create a server, just return whatever the method should return
         #assert that the server creation thing was called once
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_create_gp_server wkdir:  {}\n \n ".format(wkdir))
 
-            returned_gpserver = rgug.create_gp_server("place.com", "usename", "password")
+        logger.debug("\n \n \n test_create_gp_server \n \n ")
 
-            self.assertEqual(returned_gpserver, gpserver_object)
-            self.assertEqual(gp.GPServer.call_count, 1)
-            logger.debug("gp.GPServer.call_args {}".format(gp.GPServer.call_args))
-            self.assertEqual(gp.GPServer.call_args_list[0][0],("place.com", "usename", "password") )
+        #reset the mock calls 
+        gp.GPServer.reset_mock()
+
+        returned_gpserver = rgug.create_gp_server("place.com", "usename", "password")
+
+        self.assertEqual(returned_gpserver, gpserver_object)
+        self.assertEqual(gp.GPServer.call_count, 1)
+        logger.debug("gp.GPServer.call_args {}".format(gp.GPServer.call_args))
+        self.assertEqual(gp.GPServer.call_args_list[0][0],("place.com", "usename", "password") )
 
         
 
@@ -348,6 +374,9 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
         # for file in input_rnk_file_list
         #    self.assertEquasl("*" + os.path.basename(file), (someting fron url list)
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            gpserver_object.upload_file.reset_mock()
+
+
             logger.debug("\n \n \n test_upload_input_gp_files wkdir:  {}\n \n ".format(wkdir))
 
             test_file_path = os.path.join(wkdir, "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt")
@@ -365,103 +394,266 @@ class TestRunGseaUsingGenepattern(unittest.TestCase):
             
 
     def test_task_list(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_task_list wkdir:  {}\n \n ".format(wkdir))
+        logger.debug("\n \n \n test_task_list\n \n ")
 
-            rgug.task_list(gpserver_object)
+        gp.GPTask.reset_mock()
 
-            gp.GPTask.assert_called_once_with(gpserver_object, 100)
+        rgug.task_list(gpserver_object)
+
+        gp.GPTask.assert_called_once_with(gpserver_object, 100)
 
     def test_create_params_list(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_create_params_list wkdir:  {}\n \n ".format(wkdir))
+        logger.debug("\n \n \n test_create_params_list\n \n ")
 
-            rgug.create_params_list(gsea_preranked_module)
+        gsea_preranked_module.param_load.reset_mock()
+        gsea_preranked_module.get_parameters.reset_mock()
 
-            gsea_preranked_module.param_load.assert_called_once
 
-            gsea_preranked_module.get_parameters.assert_called_once
+        rgug.create_params_list(gsea_preranked_module)
+
+        gsea_preranked_module.param_load.assert_called_once
+
+        gsea_preranked_module.get_parameters.assert_called_once
 
 
     def test_print_param_info(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_print_param_info wkdir:  {}\n \n ".format(wkdir))
+        logger.debug("\n \n \n test_print_param_info \n \n ")
 
-            params_list = create_params_list_mock()
-            
-            rgug.print_param_info(params_list)
+        params_list = create_params_list_mock()
+        
+        rgug.print_param_info(params_list)
 
-            params_list[0].get_name.assert_called_once
-            params_list[0].get_type.assert_called_once
-            params_list[0].get_description.assert_called_once
-            params_list[0].get_default_value.assert_called_once
-            params_list[0].is_optional.assert_called_once
+        params_list[0].get_name.assert_called_once
+        params_list[0].get_type.assert_called_once
+        params_list[0].get_description.assert_called_once
+        params_list[0].get_default_value.assert_called_once
+        params_list[0].is_optional.assert_called_once
+
 
     def test_print_valid_param_choices(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_print_valid_param_choices wkdir:  {}\n \n ".format(wkdir))
+        logger.debug("\n \n \n test_print_valid_param_choices\n \n ")
 
-            params_list = create_params_list_mock()
+        params_list = create_params_list_mock()
 
-            rgug.print_valid_param_choices(params_list)
+        rgug.print_valid_param_choices(params_list)
 
-            params_list[0].get_name.assert_called_once
-            params_list[0].get_choice_selected_value.assert_called_once
+        params_list[0].get_name.assert_called_once
+        params_list[0].get_choice_selected_value.assert_called_once
 
 
     
 
 
     def test_create_reference_geneset_urls(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_create_reference_geneset_urls wkdir:  {}\n \n ".format(wkdir))
+        logger.debug("\n \n \n test_create_reference_geneset_urls\n \n ")
 
-            reference_genesets = [
-            ("all", {"c1.all.v7.1.symbols.gmt [Positional]", "c2.all.v7.1.symbols.gmt [Curated]", "c3.all.v7.1.symbols.gmt [Motif]",
-            "c5.all.v7.1.symbols.gmt [Gene Ontology]", "c6.all.v7.1.symbols.gmt [Oncogenic Signatures]",
-            "c7.all.v7.1.symbols.gmt [Immunologic signatures]", "h.all.v7.1.symbols.gmt [Hallmarks]"}),
-            ("just_hallmarks", {"h.all.v7.1.symbols.gmt [Hallmarks]"})
-            ]
+        reference_genesets = [
+        ("all", {"c1.all.v7.1.symbols.gmt [Positional]", "c2.all.v7.1.symbols.gmt [Curated]", "c3.all.v7.1.symbols.gmt [Motif]",
+        "c5.all.v7.1.symbols.gmt [Gene Ontology]", "c6.all.v7.1.symbols.gmt [Oncogenic Signatures]",
+        "c7.all.v7.1.symbols.gmt [Immunologic signatures]", "h.all.v7.1.symbols.gmt [Hallmarks]"}),
+        ("just_hallmarks", {"h.all.v7.1.symbols.gmt [Hallmarks]"})
+        ]
 
-            reference_geneset_urls  = rgug.create_reference_geneset_urls(create_params_list_mock(), reference_genesets)
+        reference_geneset_urls  = rgug.create_reference_geneset_urls(create_params_list_mock(), reference_genesets)
 
-            logger.debug("reference_geneset_urls\n {}".format(reference_geneset_urls))
+        logger.debug("reference_geneset_urls\n {}".format(reference_geneset_urls))
 
-            self.assertEqual(len(reference_geneset_urls), 2)
+        self.assertEqual(len(reference_geneset_urls), 2)
 
 
     def test_create_all_job_spec_list(self):
+        logger.debug("\n \n \n test_create_all_job_spec_list\n \n ")
+
+        reference_geneset_urls = [('all', ['ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c1.all.v7.1.symbols.gmt', 
+        'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.all.v7.1.symbols.gmt', 
+        'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c3.all.v7.1.symbols.gmt', 
+        'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c5.all.v7.1.symbols.gmt', 
+        'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c6.all.v7.1.symbols.gmt', 
+        'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c7.all.v7.1.symbols.gmt', 
+        'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt']), 
+        ('just_hallmarks', ['ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt'])]
+
+        num_permutations = 1000
+
+        job_memory = "4 Gb"
+
+        input_gp_files_list = [uploaded_gp_file, uploaded_gp_file]
+
+        all_job_spec_list = rgug.create_all_job_spec_list(num_permutations, job_memory, input_gp_files_list, reference_geneset_urls, gsea_preranked_module)
+
+        self.assertEqual(len(all_job_spec_list), 4)
+
+
+         
+    def test_print_all_job_spec_list(self):
+        logger.debug("\n \n \ntest_print_all_job_spec_list\n \n ")
+
+        job_spec.params.reset_mock()
+
+        all_job_spec_list =  [('all',job_spec), 
+        ('just_hallmarks', job_spec), 
+        ('all', job_spec), 
+        ('just_hallmarks', job_spec)]
+
+        rgug.print_all_job_spec_list(all_job_spec_list)
+
+        job_spec.params.assert_called_once
+
+    
+    def test_create_job_list(self):
+        logger.debug("\n \n \n test_create_job_list  \n \n ")
+
+        all_job_spec_list =  [('all',job_spec), 
+        ('just_hallmarks', job_spec), 
+        ('all', job_spec), 
+        ('just_hallmarks', job_spec)]
+
+        job_list = rgug.create_job_list(all_job_spec_list, gpserver_object)
+        logger.debug(job_list)
+
+    
+    def test_create_zip_dir(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_create_all_job_spec_list wkdir:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_create_zip_dir wkdir:  {}\n \n ".format(wkdir))
 
-            reference_geneset_urls = [('all', ['ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c1.all.v7.1.symbols.gmt', 
-            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c2.all.v7.1.symbols.gmt', 
-            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c3.all.v7.1.symbols.gmt', 
-            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c5.all.v7.1.symbols.gmt', 
-            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c6.all.v7.1.symbols.gmt', 
-            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/c7.all.v7.1.symbols.gmt', 
-            'ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt']), 
-            ('just_hallmarks', ['ftp://gpftp.broadinstitute.org/module_support_files/msigdb/gmt/h.all.v7.1.symbols.gmt'])]
+            source_dir = os.path.join(wkdir,"source_test")
 
-            num_permutations = 1000
+            #creating directories
+            os.mkdir(source_dir)
+            
+            gsea_dir = os.path.join(source_dir, "gsea")
+            os.mkdir(gsea_dir)
 
-            job_memory = "4 Gb"
+            zip_dir = rgug.create_zip_dir(gsea_dir)
 
-            input_gp_files_list = [uploaded_gp_file, uploaded_gp_file]
+    
 
-            rgug.create_all_job_spec_list(num_permutations, job_memory, input_gp_files_list, reference_geneset_urls, gsea_preranked_module)
+            self.assertEqual(zip_dir, os.path.join(gsea_dir, "zip_files"))
+            self.assertTrue(os.path.exists(zip_dir))
+
+
+
+    def test_prepare_zip_files_list(self):
+        #does not work atm
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_prepare_zip_files_list wkdir:  {}\n \n ".format(wkdir))
+
+            
+            
+            
+            source_dir = os.path.join(wkdir,"source_test")
+
+            #creating directories
+            os.mkdir(source_dir)
+            
+            gsea_dir = os.path.join(source_dir, "gsea")
+            os.mkdir(gsea_dir)
+
+            zip_dir = os.path.join(gsea_dir, "zip_files")
+            os.mkdir(zip_dir)
+
+            job_list =  [('all',job), 
+            ('just_hallmarks', job), 
+            ('all', job), 
+            ('just_hallmarks', job)]
+
+            rgug.prepare_zip_files_list(job_list, zip_dir)
+
+    def test_print_no_zip_files(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_print_no_zip_files wkdir:  {}\n \n ".format(wkdir))
+
+
+            no_zip_files = [('all',job)]
+
+            output_file.get_name = mock.Mock("mock of get name", return_value = os.path.join(wkdir, "file.txt"))
+            
+
+            rgug.print_no_zip_flies(no_zip_files)
+
+
+
+    def test_zipping_zip_files(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_zipping_zip_files wkdir:  {}\n \n ".format(wkdir))
+
+            my_zipfile = mock.Mock("mock of my zipfile")
+            my_zipfile.extractall = mock.Mock("mock of extract all")
+            zipfile.ZipFile = mock.Mock("mock of zip file", return_value = my_zipfile)
+
+            source_dir = os.path.join(wkdir,"source_test")
+
+            #creating directories
+            os.mkdir(source_dir)
+            
+            gsea_dir = os.path.join(source_dir, "gsea")
+            os.mkdir(gsea_dir)
+
+            zip_dir = os.path.join(gsea_dir, "zip_files")
+            os.mkdir(zip_dir)
+
+            output_file.get_name = mock.Mock("mock of get name", return_value = os.path.join(wkdir, "file.zip"))
+
+
+            t = [x for x in job.get_output_files() if x.get_name().endswith(".zip")]
+            zip_output_file = t[0]
+            dl_filename = os.path.splitext(zip_output_file.get_name())[0] + "_" + "all" + ".zip"
+            dl_filepath = os.path.join(zip_dir, dl_filename)
+
+            pathlib.Path(os.path.join(wkdir, "file_all.zip")).touch()
+            #should make a zip file here, instead of just a regular file 
+
+
+            zip_files_list = [dl_filepath]
+
+
+            rgug.zipping_zip_files(zip_files_list, gsea_dir)
+
+            self.assertEqual(len(zip_files_list), len(my_zipfile.extractall.call_args_list), len(zipfile.ZipFile.call_args_list))
+
+
+
+    def test_main(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_main wkdir:  {}\n \n ".format(wkdir))
+
+            my_zipfile = mock.Mock("mock of my zipfile")
+            my_zipfile.extractall = mock.Mock("mock of extract all")
+            zipfile.ZipFile = mock.Mock("mock of zip file", return_value = my_zipfile)
+
+            source_dir = os.path.join(wkdir,"source_test")
+            test_id = "12498123123"
+            dge_stats_for_rnk_list = ["logFC", "t"]
+            gpusername ="username"
+            gppassword = "password"
+            gpserver = "server"
+            dge_data_test = os.path.join(source_dir, "dge_data")
+
+            os.mkdir(source_dir)
+            os.mkdir(dge_data_test)
+
+
+            random_of_input_file((test_id + "_FHT3794_921_QDx1_24h_Vehicle_921_QDx1_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT3794_921_QDx6_24h_Vehicle_921_QDx6_24h_DGE_r30500x10.txt"),dge_data_test)
+
+            gp.GPServer.reset_mock()
+
+
+            args = rgug.build_parser().parse_args(["-s", source_dir, "-e", test_id, "-d", dge_stats_for_rnk_list, "-gps", gpserver, "-gpu", gpusername, "-gpp", gppassword])
+
+            rgug.main(args)
+
+            self.assertEqual(4, len(my_zipfile.extractall.call_args_list), len(zipfile.ZipFile.call_args_list))
+            gp.GPServer.assert_called_once
+
+
+
+
+
+
+
 
         
-    def test_print_all_job_spec_list(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \ntest_print_all_job_spec_list wkdir:  {}\n \n ".format(wkdir))
-
-            all_job_spec_list =  [('all',job_spec), 
-            ('just_hallmarks', job_spec), 
-            ('all', job_spec), 
-            ('just_hallmarks', job_spec)]
-
-            rgug.print_all_job_spec_list(all_job_spec_list)
         
 
 

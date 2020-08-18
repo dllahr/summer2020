@@ -19,17 +19,16 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--verbose", "-v", help="Whether to print a bunch of output.", action="store_true", default=False)
-    parser.add_argument("--hostname", help="lims db host name", type=str, default="getafix-v")
 
 
-    parser.add_argument("--sourcedir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", type = str, required = True )
-    parser.add_argument("--experimentid", "-e", help = "id of the expirment", type = str, required = True)
+    parser.add_argument("--source_dir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", type = str, required = True )
+    parser.add_argument("--experiment_id", "-e", help = "id of the expirment", type = str, required = True)
     
     parser.add_argument("--dgestatsforrnklist", "-d", help = "dge stats for heatmaps",  default = ["logFC", "t"])
 
     parser.add_argument("--gpserver", "-gps", help = "gp server", required = True)
-    parser.add_argument("--gpusername", 'gpu', help = "gp password", required = True)
-    parser.add_argument("--gppassword", 'gpp', help = "gp password", required = True)
+    parser.add_argument("--gpusername", '-gpu', help = "gp password", required = True)
+    parser.add_argument("--gppassword", '-gpp', help = "gp password", required = True)
 
     #could make the default args for this dave's username password and server path, and then removed required but not going to do that now
     
@@ -295,6 +294,7 @@ def prepare_zip_files_list(job_list, zip_dir):
     #     print(gs_group_name)
 
         t = [x for x in job.get_output_files() if x.get_name().endswith(".zip")]
+        logger.debug("t{}".format(t))
         
         if len(t) == 1:
             dl_filepath = if_len_t_1(t, zip_dir, gs_group_name)
@@ -313,12 +313,12 @@ def prepare_zip_files_list(job_list, zip_dir):
             logger.debug("gs_group_name: {}".format(gs_group_name))
             logger.debug("*****************************************************")
         
-    logger.debug()
+    logger.debug("")
     logger.debug("#####################################")
     logger.debug("info about zip_files_list:")
     logger.debug(len(zip_files_list))
     logger.debug("\n".join(zip_files_list))
-    logger.debug()
+    logger.debug("")
 
     return zip_files_list, no_zip_files
 
@@ -372,8 +372,6 @@ def zipping_zip_files(zip_files_list, gsea_dir):
 
 def main(args):
     logger.info("run_gsea_using_genepattern")
-    source_dir = args.sourcedir
-    experiment_id = args.experiment_id
 
     dge_stats_for_rnk_list = args.dgestatsforrnklist
 
@@ -401,10 +399,10 @@ def main(args):
     gp_url = args.gpserver
 
 
-    gsea_dir, rnk_dir = prepare_output_dir(source_dir)
+    gsea_dir, rnk_dir = prepare_output_dir(args.source_dir)
     #prepare the output directories
 
-    dge_file_list = find_DGE_files(source_dir, experiment_id)
+    dge_file_list = find_DGE_files(args.source_dir, args.experiment_id)
     #find the dge files in source dir
 
     input_rnk_files_list = build_all_rnk_files(dge_file_list, dge_stats_for_rnk_list, rnk_dir)

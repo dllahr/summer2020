@@ -45,6 +45,7 @@ def prepare_output_dir(source_dir):
     os.mkdir(heatmap_dir) #create the path heatmaps in source_dir
     return heatmap_dir
 
+
 def  find_DGE_files(source_dir, experiment_id):
     dge_file_list = glob.glob(
         os.path.join(source_dir, "dge_data", experiment_id + "_*_DGE_r*.txt")
@@ -58,6 +59,7 @@ def  find_DGE_files(source_dir, experiment_id):
     logger.debug("dge_file_list\n{}".format(dge_file_list))
 
     return(dge_file_list)
+
 
 def read_DGE_files(dge_file_list):
     dge_df_list = [
@@ -83,6 +85,7 @@ def read_DGE_files(dge_file_list):
         logger.debug("dge_df.head()\n{}".format(dge_df.head()))
     
     return dge_df_list
+
 
 def prepare_all_GCToo_objects(dge_stats_for_heatmaps, dge_df_list):
     heatmap_gct_list = []
@@ -130,6 +133,7 @@ def prepare_col_metadata(dge_stat, data_df_columns):
     logger.debug("col_metadata_df: \n{}".format(col_metadata_df.head()))
     return col_metadata_df
 
+
 def prepare_GCToo_object(dge_stat, dge_df_list):
     row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
 
@@ -140,6 +144,7 @@ def prepare_GCToo_object(dge_stat, dge_df_list):
     heatmap_g = GCToo.GCToo(data_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df)
     logger.debug("heatmap_g: {}".format(heatmap_g))
     return heatmap_g
+
 
 def write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir):
     for dge_stat, heatmap_g in heatmap_gct_list:
@@ -152,6 +157,7 @@ def write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
         logger.debug("output_filepath: {}".format(output_filepath))
     
         write_gct.write(heatmap_g, output_filepath)
+
 
 def prepare_links(heatmap_gct_list, url_template, base_data_path):
     url_list = []
@@ -249,10 +255,6 @@ def main(args):
     #writing the html to the file
 
     return html
-
-    
-
-
 
 
 if __name__ == "__main__":

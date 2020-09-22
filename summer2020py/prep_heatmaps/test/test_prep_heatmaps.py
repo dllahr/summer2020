@@ -42,50 +42,51 @@ def random_of_input_file(name, dirs):
 
 class TestPrepHeatmaps(unittest.TestCase):
     def test_main(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_main:  {}\n \n ".format(wkdir))
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as source_dir:
+            logger.debug("\n \n \n test_main:  {}\n \n ".format(source_dir))
 
             test_id = "MYEXPID98765"
 
-            base_path = wkdir
-            relative_path = "heatmaps"
-            base_url = "http://fht.samba.data/fht_morpheus.html?gctData="
-            source_dir = os.path.join(wkdir,"source_test")
-            dge_stats_for_heatmaps = ["logFC", "t"]
             dge_data_test = os.path.join(source_dir, "dge_data")
 
             #creating directories
-            os.mkdir(source_dir)
-            os.mkdir(dge_data_test)  
-
-            #making directories so that base_data_path won't throw an error when called
-            os.mkdir(os.path.join(wkdir, test_id))
-            os.mkdir(os.path.join(wkdir, test_id, relative_path))     
+            os.mkdir(dge_data_test)
             
             #adding some samples
-
-            random_of_input_file((test_id + "_FHT1234_A549_tp1_24h_Vehicle_A549_tp1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT1234_A549_tp2_24h_Vehicle_A549_tp2_24h_DGE_r30500x10.txt"),dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_A549_tp1_24h_Vehicle_A549_tp1_24h_DGE_r30500x10.txt"), dge_data_test)
+            random_of_input_file((test_id + "_FHT1234_A549_tp2_24h_Vehicle_A549_tp2_24h_DGE_r30500x10.txt"), dge_data_test)
         
             #simulate adding the commands on the command line using parser
-            args = ph.build_parser().parse_args(["-s", source_dir, "-e", test_id, "-d", dge_stats_for_heatmaps, "-b", 
-            base_path, "-r", relative_path, "-u", base_url])
+            args = ph.build_parser().parse_args([
+                "-s", source_dir, 
+                "-e", test_id, 
+            ])
 
-            html = ph.main(args)
+            c = glob.glob(os.path.join(source_dir, "*"))
+            c.sort()
+            logger.debug("contents before running - c:\n{}".format("\n".join(c)))
+            ph.main(args)
 
-            expected_html = ("""<html>
-    <body>
-    <h1>MYEXPID98765 links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
-    <ul><li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}/MYEXPID98765_heatmap_logFC_r10x2.gct"> heatmap of dge statistic:  logFC</a></li>
-    <li><a href="http://fht.samba.data/fht_morpheus.html?gctData={}/MYEXPID98765_heatmap_t_r10x2.gct"> heatmap of dge statistic:  t</a></li>
-    </ul>
-    </body>
-    </html>""").format(os.path.join(args.base_data_path, args.experiment_id, args.relative_path), os.path.join(args.base_data_path, args.experiment_id, args.relative_path))
+            c = glob.glob(os.path.join(source_dir, "*"))
+            c.sort()
+            logger.debug("contents after running - c:\n{}".format("\n".join(c)))
 
-            self.maxDiff = None # add this line so when checking difference here with subsequent assert if there is a 
-            # difference it will be displayed (not limited b/c of length)
-            self.assertEqual(expected_html, html)
+            expected_heatmaps_dir = os.path.join(source_dir, "heatmaps")
+            self.assertTrue(os.path.exists(expected_heatmaps_dir))
 
+            found_heatmap_files = glob.glob(
+                os.path.join(expected_heatmaps_dir, "*")
+            )
+            found_heatmap_files.sort()
+            logger.debug("len(found_heatmap_files):  {}".format(len(found_heatmap_files)))
+            logger.debug("found_heatmap_files:\n{}".format("\n".join(found_heatmap_files)))
+
+            self.assertLess(1, len(found_heatmap_files))
+            self.assertTrue(
+                any(
+                    ["interactive_heatmap" in x for x in found_heatmap_files]
+                )
+            )
 
     def test_prepare_output_dir(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
@@ -117,7 +118,8 @@ class TestPrepHeatmaps(unittest.TestCase):
             source_dir = os.path.join(wkdir,"source_test")
             test_id ="MYEXPID98765"
             notthistest_id = "rnauasf"
-            dge_data_test = os.path.join(source_dir, "dge_data")
+            dge_dir_name = "my_dge_data"
+            dge_data_test = os.path.join(source_dir, dge_dir_name)
 
             #creating directories
             os.mkdir(source_dir)
@@ -133,7 +135,7 @@ class TestPrepHeatmaps(unittest.TestCase):
             pathlib.Path(not_test_file_path).touch()
 
             #running the method
-            dge_file_list = ph.find_DGE_files(source_dir, test_id)
+            dge_file_list = ph.find_DGE_files(source_dir, dge_dir_name, test_id)
 
             #create a strings to the path 
             #can create variable, os.path.basename of dge_file_list and check that the string is that 
@@ -162,8 +164,10 @@ class TestPrepHeatmaps(unittest.TestCase):
             random_of_input_file((test_id + "_FHT1234_A549_tp1_24h_Vehicle_A549_tp1_24h_DGE_r30500x10.txt"),dge_data_test)
             random_of_input_file((test_id + "_FHT1234_A549_tp2_24h_Vehicle_A549_tp2_24h_DGE_r30500x10.txt"),dge_data_test)
 
-            dge_file_list = ['{}/source_test/dge_data/MYEXPID98765_FHT1234_A549_tp1_24h_Vehicle_A549_tp1_24h_DGE_r30500x10.txt'.format(wkdir), 
-            '{}/source_test/dge_data/MYEXPID98765_FHT1234_A549_tp2_24h_Vehicle_A549_tp2_24h_DGE_r30500x10.txt'.format(wkdir)]
+            dge_file_list = [
+                '{}/source_test/dge_data/MYEXPID98765_FHT1234_A549_tp1_24h_Vehicle_A549_tp1_24h_DGE_r30500x10.txt'.format(wkdir), 
+                '{}/source_test/dge_data/MYEXPID98765_FHT1234_A549_tp2_24h_Vehicle_A549_tp2_24h_DGE_r30500x10.txt'.format(wkdir)
+            ]
 
             dge_df_list = ph.read_DGE_files(dge_file_list)
             
@@ -359,119 +363,82 @@ class TestPrepHeatmaps(unittest.TestCase):
                 
 
     def test_prepare_links(self):
+        test_id ="MYEXPID98765"
+
+        test_heatmap_gct_list = [
+            ("logFC", GCToo.GCToo(pandas.DataFrame(), src="my_test_heatmap.gct")),
+            ("t", GCToo.GCToo(pandas.DataFrame(), src="another_test_heatmap.gct"))
+        ]
         
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_prepare_links: wkdir {}\n \n ".format(wkdir))
-            #creating file and a list to pass into read DGE_files
-            test_id ="MYEXPID98765"
-            source_dir = os.path.join(wkdir,"source_test")
-            dge_data_test = os.path.join(source_dir, "dge_data")
+        base_data_path = "/my/base/path/to/data/"
 
-            #creating directories
-            os.mkdir(source_dir)
-            os.mkdir(dge_data_test)
+        url_template = "http://some/fake/url/and?my_param={data_path}"
 
-            random_of_input_file((test_id + "_FHT1234_A549_tp1_24h_Vehicle_A549_tp1_24h_DGE_r30500x10.txt"),dge_data_test)
-            random_of_input_file((test_id + "_FHT1234_A549_tp2_24h_Vehicle_A549_tp2_24h_DGE_r30500x10.txt"),dge_data_test)
+        url_list = ph.prepare_links(test_heatmap_gct_list, url_template, base_data_path)
+        logger.debug("len(url_list):  {}".format(len(url_list)))
+        logger.debug("url_list:  {}".format(url_list))
 
-            dge_file_list = ['{}/source_test/dge_data/MYEXPID98765_FHT1234_A549_tp1_24h_Vehicle_A549_tp1_24h_DGE_r30500x10.txt'.format(wkdir), 
-            '{}/source_test/dge_data/MYEXPID98765_FHT1234_A549_tp2_24h_Vehicle_A549_tp2_24h_DGE_r30500x10.txt'.format(wkdir)] 
+        r0 = url_list[0]
+        e0 = ("logFC", url_template.format(data_path=base_data_path) + "heatmaps/my_test_heatmap.gct")
+        self.assertEqual(e0, r0)
 
-            dge_df_list = [
-            (
-            pandas.read_csv(dge_file, sep="\t", index_col=0),
-            os.path.basename(dge_file)
-            )
-            for dge_file in dge_file_list
-            ]
-            test_dge_stat = "logFC"
-
-            output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
-    
-
-            data_df_vaules = [[0.0776354686633181, 0.0776354686633181], [-0.581704751304994, -0.581704751304994], [-0.6736706335046471, -0.6736706335046471], 
-            [-0.6983420979505, -0.6983420979505], [0.17469165710934198, 0.17469165710934198], [0.00627185142921816, 0.00627185142921816], 
-            [-0.368901439453788, -0.368901439453788], [0.144740264311605, 0.144740264311605], [1.03902293388003, 1.03902293388003], [-0.243853638780661, -0.243853638780661]]
-
-            data_columns = ['logFC_FHT1234_A549_tp1_24h_Vehicle_A549_tp1_24h', 'logFC_FHT1234_A549_tp2_24h_Vehicle_A549_tp2_24h']
-
-            data_index = ['ENSG00000236389', 'ENSG00000115355', 'ENSG00000162613', 'ENSG00000189143', 'ENSG00000204044', 
-            'ENSG00000259051', 'ENSG00000126467', 'ENSG00000276408', 'ENSG00000136842', 'ENSG00000239559']
-
-            data_df = pandas.DataFrame(data_df_vaules, columns = data_columns, index = data_index)
-
-            col_meta_list = [x.split("_") for x in data_columns]
-            col_metadata_df = pandas.DataFrame(col_meta_list)
-            col_metadata_df.columns = ["annot{}".format(c) for c in col_metadata_df.columns]
-            col_metadata_df["dge_statistic"] = test_dge_stat
-            col_metadata_df.index = data_df.columns
-
-            row_metadata_df = dge_df_list[0][0][["gene_symbol"]]
-
-            test_heatmap_gct_list = [("logFC", GCToo.GCToo(data_df, col_metadata_df=col_metadata_df, row_metadata_df=row_metadata_df))]
-            
-            base_data_path = wkdir
-
-            output_template = test_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
-
-            url_template = "http://fht.samba.data/fht_morpheus.html?gctData={data_path}"
+        r1 = url_list[1]
+        e1 = ("t", url_template.format(data_path=base_data_path) + "heatmaps/another_test_heatmap.gct")
+        self.assertEqual(e1, r1)
 
 
-            for dge_stat, heatmap_g in test_heatmap_gct_list:
-                output_filename = output_template.format(
-                    dge_stat=dge_stat, rows=heatmap_g.data_df.shape[0], cols=heatmap_g.data_df.shape[1]
-                )
-                heatmap_g.src = output_filename
-
-            url_list = ph.prepare_links(test_heatmap_gct_list, url_template, base_data_path)
-
-            i = 0
-            for dge_stat, heatmap_g in test_heatmap_gct_list:
-                data_path = os.path.join(base_data_path, heatmap_g.src)
-                cur_url = url_template.format(data_path=data_path)
-                self.assertTrue(url_list[i] == (dge_stat, cur_url))
-                i += 1
-
-            
     def test_prepare_html(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_prepare_html wkdir :  {}\n \n ".format(wkdir))
+        test_id = "MYEXPID98765"
 
-            test_id = "MYEXPID98765"
+        server_data_dir = "/server/data"
 
-            url_list = [('logFC', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}/MYEXPID98765_heatmap_logFC_r10x2.gct'.format(wkdir)), 
-            ('t', 'http://fht.samba.data/fht_morpheus.html?gctData=C:{}/MYEXPID98765_heatmap_t_r10x2.gct'.format(wkdir))]
+        url_list = [
+            (
+                'logFC', 
+                'http://fht.samba.data/fht_morpheus.html?gctData=C:{}/heatmaps/MYEXPID98765_heatmap_logFC_r10x2.gct'.format(server_data_dir)
+            ), 
+            (
+                't',
+                'http://fht.samba.data/fht_morpheus.html?gctData=C:{}/heatmaps/MYEXPID98765_heatmap_t_r10x2.gct'.format(server_data_dir)
+            )
+        ]
             
 
-            a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
-    """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]
+        a_lines = [
+            """\t<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>""".format(url=url, dge_stat=dge_stat) 
+            for dge_stat, url in url_list
+        ]
 
-            expected_html = ("""<html>
-    <body>
-    <h1>{exp_id} links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
-    <ul>""".format(exp_id=test_id)
-    + "".join(a_lines)
-    + """</ul>
-    </body>
-    </html>"""
+        expected_html = ("""<html>
+<body>
+<h1>{exp_id} links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
+<ul>
+""".format(exp_id=test_id)
+    
++ "\n".join(a_lines)
+
++"""
+</ul>
+</body>
+</html>"""
     )
-        
+        logger.debug("exected_html:\n{}".format(expected_html))
+
         html = ph.prepare_html(url_list, test_id)
 
-        self.assertEqual(html, expected_html)
+        logger.debug("html:\n{}".format(html))
+
+        self.assertEqual(expected_html, html)
 
 
     def test_determine_html_filepath(self):
-        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_determine_html_filepath wkdir :  {}\n \n ".format(wkdir))
+        wkdir = "my_hypothetical_wkdir"
 
-            html_file_name = "html_file"
+        html_file_name = "my_html_file"
 
-            html_filepath = ph.determine_html_filepath(wkdir, html_file_name)
+        html_filepath = ph.determine_html_filepath(wkdir, html_file_name)
 
-            self.assertEqual(html_filepath, os.path.join(wkdir, html_file_name))
-
-            #determine_html_filepath is just a join statment
+        self.assertEqual(html_filepath, os.path.join(wkdir, html_file_name))
 
 
     def test_write_html_to_file(self):
@@ -480,12 +447,12 @@ class TestPrepHeatmaps(unittest.TestCase):
 
             html_filepath = os.path.join(wkdir, "html_file")
 
-            ph.write_html_to_file("hi", html_filepath)
+            ph.write_html_to_file("hi test_write_html_to_file", html_filepath)
 
             self.assertTrue(os.path.exists(html_filepath))
 
             with open(html_filepath) as html_file:
-                self.assertTrue("hi" in html_file)
+                self.assertTrue("hi test_write_html_to_file" in html_file)
 
 
 if __name__ == "__main__":

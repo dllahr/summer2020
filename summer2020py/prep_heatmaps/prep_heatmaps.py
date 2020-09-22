@@ -18,13 +18,22 @@ def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--verbose", "-v", help="Whether to print a bunch of output.", action="store_true", default=False)
 
-    parser.add_argument("--source_dir", "-s", help = "source directory, where the DGE data is and where the heatmaps will be created", type = str, required = True )
+    parser.add_argument("--source_analysis_dir", "-s", 
+        help = "source directory containin analysis, where the DGE data is found and where the heatmaps (subdirectory) will be created",
+        type = str, required = True)
     parser.add_argument("--experiment_id", "-e", help = "id of the expirment", type = str, required = True)
     
     parser.add_argument("--dge_stats_for_heatmaps", "-d", help = "dge stats for heatmaps",  default = ["logFC", "t"])
-    parser.add_argument("--base_data_path", "-b", help = "path to directory with experiment id in it", type = str, default = "/data/experiments/RNA_SEQ/")
-    parser.add_argument("--relative_path", "-r", help = "path from experiment id to where you want the heatmaps", type = str, default = "/analysis/heatmaps/")
+    parser.add_argument("--base_server_data_path", "-b", help = "base path to directory on server with subfolders of experiment id in it", 
+        type = str, default = "/data/experiments/RNA_SEQ/")
+    parser.add_argument("--relative_analysis_path", "-r", 
+        help = """relative path from directory for specific experiment to analysis directory""",
+        type = str, default = "analysis/")
     parser.add_argument("--base_url", "-u", help = "base url for the heatmaps to be put onto", type = str, default = "http://fht.samba.data/fht_morpheus.html?gctData=")
+
+    parser.add_argument("--dge_dir_name", "-ddn", 
+        help="name of subdirectory in source_analysis_dir that contains differential gene expression (dge) data tables",
+        type=str, default="dge_data")
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
         type=str, default=summer2020py.default_config_filepath)
@@ -35,8 +44,8 @@ def build_parser():
     return parser
 
 
-def prepare_output_dir(source_dir):
-    heatmap_dir = os.path.join(source_dir, "heatmaps")
+def prepare_output_dir(source_analysis_dir):
+    heatmap_dir = os.path.join(source_analysis_dir, "heatmaps")
     logger.debug("heatmap_dir: {}".format(heatmap_dir))
     #if the path heatmaps exists in source_dir, delete it
     if os.path.exists(heatmap_dir):
@@ -46,17 +55,21 @@ def prepare_output_dir(source_dir):
     return heatmap_dir
 
 
-def  find_DGE_files(source_dir, experiment_id):
+def  find_DGE_files(source_analysis_dir, dge_dir_name, experiment_id):
     dge_file_list = glob.glob(
-        os.path.join(source_dir, "dge_data", experiment_id + "_*_DGE_r*.txt")
+        os.path.join(source_analysis_dir, dge_dir_name, experiment_id + "_*_DGE_r*.txt")
     )
-    #set equa to dge_file_list all the files in source dir, in dge_data that start with the experiment id and end with _*_DGE_r*.txt where * is wildcard
+    #set equal to dge_file_list all the files in source dir, in dge_data that start with the experiment id and end with _*_DGE_r*.txt where * is wildcard
 
     dge_file_list.sort()
     #sort the file list
 
     logger.debug("len(dge_file_list): {}".format(len(dge_file_list)))
-    logger.debug("dge_file_list\n{}".format(dge_file_list))
+    logger.debug(
+        "dge_file_list:\n{}".format(
+            "\n".join(dge_file_list)
+        )
+    )
 
     return(dge_file_list)
 
@@ -159,12 +172,12 @@ def write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
         write_gct.write(heatmap_g, output_filepath)
 
 
-def prepare_links(heatmap_gct_list, url_template, base_data_path):
+def prepare_links(heatmap_gct_list, url_template, output_server_path):
     url_list = []
     logger.debug("heatmap{}".format(heatmap_gct_list))
 
     for dge_stat, heatmap_g in heatmap_gct_list:
-        data_path = os.path.join(base_data_path, heatmap_g.src)
+        data_path = os.path.join(output_server_path, "heatmaps", heatmap_g.src)
         logger.debug("data_path: {}".format(data_path))
     
         cur_url = url_template.format(data_path=data_path)
@@ -177,17 +190,24 @@ def prepare_links(heatmap_gct_list, url_template, base_data_path):
 
 
 def prepare_html(url_list, experiment_id):
-    a_lines = ["""<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>
-    """.format(url=url, dge_stat=dge_stat) for dge_stat, url in url_list]
+    a_lines = [
+        """\t<li><a href="{url}"> heatmap of dge statistic:  {dge_stat}</a></li>""".format(url=url, dge_stat=dge_stat) 
+        for dge_stat, url in url_list
+    ]
 
-    html = ("""<html>
-    <body>
-    <h1>{exp_id} links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
-    <ul>""".format(exp_id=experiment_id)
-    + "".join(a_lines)
-    + """</ul>
-    </body>
-    </html>"""
+    html = (
+        """<html>
+<body>
+<h1>{exp_id} links to interactive heatmaps of differential gene expression (DGE) statistics</h1>
+<ul>
+""".format(exp_id=experiment_id)
+
+        + "\n".join(a_lines)
+
+        + """
+</ul>
+</body>
+</html>"""
     )
     logger.debug(html)
     logger.debug("")
@@ -211,13 +231,11 @@ def write_html_to_file(html, html_filepath):
 
 def main(args):
     output_template = args.experiment_id + "_heatmap_{dge_stat}_r{rows}x{cols}.gct"
-    logger.debug("output_template{}".format(output_template))
+    logger.debug("output_template:  {}".format(output_template))
     #the output template that will be used later 
-
-    #base_data_path = "{base_path}{exp_id}{relative_path}".format(base_path = args.base_data_path, exp_id= args.experiment_id, relative_path = args.relativepath)
-    base_data_path = os.path.join(args.base_data_path, args.experiment_id, args.relative_path)
-    logger.debug(base_data_path)
-    #where the data is 
+    
+    output_server_path = os.path.join(args.base_server_data_path, args.experiment_id, args.relative_analysis_path)
+    logger.debug("output_server_path:  {}".format(output_server_path))
 
     url_template = "{base_url}{{data_path}}".format(base_url = args.base_url)
     logger.debug("url_template: {}".format(url_template))
@@ -227,10 +245,10 @@ def main(args):
     logger.debug("output_html_link_file: {}".format(output_html_link_file))
     #the file name of the html file that will have all the urls for the heatmaps
 
-    heatmap_dir = prepare_output_dir(args.source_dir)
-    #prpare the output directory 
+    heatmap_dir = prepare_output_dir(args.source_analysis_dir)
+    #prepare the output directory 
 
-    dge_file_list = find_DGE_files(args.source_dir, args.experiment_id)
+    dge_file_list = find_DGE_files(args.source_analysis_dir, args.dge_dir_name, args.experiment_id)
     #finding the DGE files and saving them to dge file list
 
     dge_df_list = read_DGE_files(dge_file_list)
@@ -242,7 +260,7 @@ def main(args):
     write_GCToo_objects_to_files(heatmap_gct_list, output_template, heatmap_dir)
     #writing GCToo objects to files
 
-    url_list = prepare_links(heatmap_gct_list, url_template, base_data_path)
+    url_list = prepare_links(heatmap_gct_list, url_template, output_server_path)
     #creating list of urls that will be added to file
 
     html_filepath = determine_html_filepath(heatmap_dir, output_html_link_file)

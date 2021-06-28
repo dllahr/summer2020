@@ -17,6 +17,7 @@ brainstormed list of things we could work on
 * build heatmaps from arbitrary set of experiments
   * probably needs to have differential metadata generated
   * maybe add multiple layers i.e. logFc and adj.P.Value
+* "fix" interactive Venn diagram tool
 * script for geneBody coverage - make this part of the pipeline
 * new GSEA script - use use command line GSEA?  investigate other options?
 * run genewalk analysis on some sample data, build script to do so consistently

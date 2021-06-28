@@ -47,6 +47,14 @@ subsequent entries are the specific libraries to add to the environment:
 
 run the command:  `conda activate compbio`
 
+### notes to fix import errors and module not found 
+
+navigate to the top level directory of summer2020 while in compbio
+
+run the command: `python setup.py develop`
+
+
+
 ### start the jupyter notebook
 
 run the command:  `jupyter-notebook`

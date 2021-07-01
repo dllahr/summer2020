@@ -179,7 +179,15 @@ def main(args):
     logger.info("hello world!")
 
     output_file_prefix = args.output_file_prefix
-    output_dir = args.output_dir
+
+
+
+    if args.output_dir == None:
+        output_dir = args.input_dir
+    else:
+        output_dir = args.output_dir
+
+    
     input_dir = args.input_dir
 
     #setting up output templates 

@@ -227,21 +227,21 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
         self.assertAlmostEqual(pct_comp_df.cov_diff_pct[1], 0.867145, places=5)
         
 
-    def test_add_label_col_to_pct(self):
-        logger.debug("\n \n \n test_add_label_col_to_pct\n \n ")
+    def test_add_label_col(self):
+        logger.debug("\n \n \n test_add_label_col\n \n ")
 
         pct_comp_df = pandas.DataFrame(data = {"cov_diff_pct":[0.810320,0.867145]}, index = ["FAKE", "FACE"])
         pct_comp_df.index.name = "sample_id"
 
-        pct_comp_df = mgcg.add_label_col_to_pct(pct_comp_df)
+        pct_comp_df = mgcg.add_label_col(pct_comp_df)
 
         logger.debug(pct_comp_df)
 
         self.assertEqual(pct_comp_df.label[0], "FAKE  0.81")
         self.assertEqual(pct_comp_df.label[1], "FACE  0.87")
 
-    def test_add_label_col_to_percentile(self):
-        logger.debug("\n \n \n test_add_label_col_to_percentile\n \n ")
+    def test_add_labels_based_on_sample_id(self):
+        logger.debug("\n \n \n test_add_labels_based_on_sample_id\n \n ")
 
         sample_ids =[]
         for i in range(0, 200):
@@ -254,7 +254,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
         percentile_df = pandas.DataFrame({"sample_id":sample_ids})
 
-        percentile_df = mgcg.add_label_col_to_percentile(percentile_df, pct_comp_df)
+        percentile_df = mgcg.add_labels_based_on_sample_id(percentile_df, pct_comp_df)
 
         self.assertEqual(percentile_df.label[0], "FAKE  0.81")
         self.assertEqual(percentile_df.label[100], "FACE  0.87")
@@ -297,9 +297,9 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
             self.assertTrue(os.path.exists(out_f_percentile))
 
 
-    def test_create_and_save_line_graph(self):
+    def test_create_and_save_genebody_coverage_graph(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_create_and_save_line_graph:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_create_and_save_genebody_coverage_graph:  {}\n \n ".format(wkdir))
 
             output_line_html_template = "{exp_id}_genebody_{{}}.html".format(exp_id="MYEXPERIMENTID")
             logger.debug(output_line_html_template)
@@ -320,7 +320,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
             percentile_df = pandas.DataFrame({"coverage_percentile":coverage_percentile, "sample_id":sample_ids, "genebody_pct":list(range(1,101))+ list(range(1,101)), "label":labels})
 
-            output_filepath = mgcg.create_and_save_line_graph("coverage_percentile", wkdir, percentile_df, output_line_html_template)
+            output_filepath = mgcg.create_and_save_genebody_coverage_graph("coverage_percentile", wkdir, percentile_df, output_line_html_template)
 
             self.assertTrue(os.path.exists(output_filepath))
 
@@ -340,6 +340,32 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
             output_filepath = mgcg.create_and_save_histograms("cov_diff_pct", wkdir, pct_comp_df, output_histogram_html_template)
 
             self.assertTrue(os.path.exists(output_filepath))
+
+
+    def test_build_output_template_dict(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_build_output_template_dict:  {}\n \n ".format(wkdir))
+
+            output_compare_80_20_template = "{exp_id}_asymmetry_compare_80_20_r{{}}x{{}}.txt".format(exp_id="MYEXPERIMENTID")
+            output_all_pct_template = "{exp_id}_all_genebody_coverage_r{{}}x{{}}.txt".format(exp_id="MYEXPERIMENTID")
+            output_line_html_template = "{exp_id}_genebody_{{}}.html".format(exp_id="MYEXPERIMENTID")
+            output_histogram_html_template = "{exp_id}_genebody_histogram_{{}}.html".format(exp_id="MYEXPERIMENTID")
+
+            output_template_dict = mgcg.build_output_template_dict("MYEXPERIMENTID")
+
+            #check that the values in the dict are the correct templates
+            self.assertEqual( output_template_dict["compare_80_20"], output_compare_80_20_template)
+            self.assertEqual( output_template_dict["all_pct"], output_all_pct_template)
+            self.assertEqual( output_template_dict["line_html"], output_line_html_template)
+            self.assertEqual( output_template_dict["histogram_html"], output_histogram_html_template)
+
+
+
+
+
+
+
+
 
 
 

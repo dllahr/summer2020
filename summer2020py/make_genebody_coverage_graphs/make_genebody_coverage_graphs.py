@@ -60,7 +60,7 @@ def input_file_search(input_dir):
     logger.debug("\n input_files[:3]: {}".format(input_files[:3]))
     return input_files
 
-def input_files_to_dfs(input_files):
+def load_genebody_coverage_data(input_files):
     inp_df_list = []
 
     for inp_f in input_files[:]:
@@ -69,7 +69,9 @@ def input_files_to_dfs(input_files):
 
         #sample_id = inp_df.columns[0].split(".")[0]
 
-        sample_id = os.path.normpath(inp_f).split("/")[-2]
+        #normpath converts any file seperator to \ so this works on both Mac and Windows
+
+        sample_id = os.path.normpath(inp_f).split("\\")[-2]
         logger.debug("sample_id:{}".format(sample_id))
 
 
@@ -198,7 +200,7 @@ def main(args):
     input_files = input_file_search(args.input_dir)
 
     #convert files to data frames
-    inp_df_list = input_files_to_dfs(input_files)
+    inp_df_list = load_genebody_coverage_data(input_files)
 
     #merge df into one
     counts_df = merge_dfs_into_one(inp_df_list)

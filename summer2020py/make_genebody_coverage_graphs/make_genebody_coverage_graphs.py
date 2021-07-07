@@ -39,7 +39,7 @@ def build_parser():
 
     parser.add_argument("--input_dir", "-i", help = "directory where inputs are, will search in the subdirectories of input_dir for the genebody coverage txt files", type = str, required = True)
 
-    parser.add_argument("--output_dir", "-o", help = "directory where outputs are, often experiment ID ", type = str)
+    parser.add_argument("--output_dir", "-o", help = "directory where outputs are, often experiment ID ", type = str,  required = True)
 
     parser.add_argument("--output_file_prefix", "-of", help = "file prefix for outputted files, could be expirment ID", type = str, required = True)
    
@@ -110,7 +110,7 @@ def sum_counts(counts_df):
     logger.debug("sum_counts_df.shape: {}".format(sum_counts_df.shape))
     return sum_counts_df
 
-def join_counts_sum(counts_df, sum_counts_df):
+def calculate_percentile_df(counts_df, sum_counts_df):
     percentile_df = counts_df.join(sum_counts_df, on="sample_id", how="left")
     percentile_df["coverage_percentile"] = percentile_df.coverage_counts / percentile_df.total_coverage_counts
     logger.debug("percentile_df.shape: {}".format(percentile_df.shape))
@@ -209,7 +209,7 @@ def main(args):
     sum_counts_df = sum_counts(counts_df)
 
     #converge percentile df 
-    percentile_df = join_counts_sum(counts_df, sum_counts_df)
+    percentile_df = calculate_percentile_df(counts_df, sum_counts_df)
 
     #create pct_df_list
     pct_df_list = create_pct_df_list(percentile_df)

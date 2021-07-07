@@ -75,6 +75,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
         self.assertEqual(len(input_files), 12)
 
+        #check that the first 3 files are the correct ones
         self.assertEqual('assets\\notebook_inputs\\output_gbdy_cov\\D121\\D121.geneBodyCoverage.txt', input_files[0])
         self.assertEqual('assets\\notebook_inputs\\output_gbdy_cov\\D122\\D122.geneBodyCoverage.txt', input_files[1])
         self.assertEqual('assets\\notebook_inputs\\output_gbdy_cov\\D123\\D123.geneBodyCoverage.txt', input_files[2])
@@ -150,8 +151,8 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
         self.assertEqual(sum_counts_df.total_coverage_counts[1], 29800000)
 
 
-    def test_join_counts_sum(self):
-        logger.debug("\n \n \n test_join_counts_sum\n \n ")
+    def test_calculate_percentile_df(self):
+        logger.debug("\n \n \n test_jcalculate_percentile_df\n \n ")
 
         sample_ids =[]
         for i in range(0, 200):
@@ -165,7 +166,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
         sum_counts_df = pandas.DataFrame(data = {"total_coverage_counts":[31800000, 29800000]}, index = ["FACE", "FAKE"])
         sum_counts_df.index.name = "sample_id"
 
-        percentile_df = mgcg.join_counts_sum(counts_df, sum_counts_df)
+        percentile_df = mgcg.calculate_percentile_df(counts_df, sum_counts_df)
         
 
         #check that df is the right shape

@@ -27,11 +27,17 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
 class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
     def test_main(self):
+        logger.debug("\n \n \n test_main \n \n ")
+
+        input_dir = os.path.join("assets", "notebook_inputs", "output_gbdy_cov")
+        logger.debug("input_dir:  {}".format(input_dir))
+
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_main:  {}\n \n ".format(wkdir))
+            logger.debug("wkdir:  {}".format(wkdir))
+
             args = mgcg.build_parser().parse_args([
                     #"-s", source_dir, 
-                    "-i", "assets\\notebook_inputs\\output_gbdy_cov\\", 
+                    "-i", input_dir, 
                     "-o", wkdir,
                     "-of", "MYEXPERIMENTID"
                 ])
@@ -53,8 +59,8 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
             ]
 
             expected_files = [
-                "assets\\example_notebook_outputs\\MYEXPERIMENTID_all_genebody_coverage_r1200x6.txt",
-                "assets\\example_notebook_outputs\\MYEXPERIMENTID_asymmetry_compare_80_20_r12x6.txt"
+                os.path.join("assets", "example_notebook_outputs", "MYEXPERIMENTID_all_genebody_coverage_r1200x6.txt"),
+                os.path.join("assets", "example_notebook_outputs", "MYEXPERIMENTID_asymmetry_compare_80_20_r12x6.txt")
             ]
 
             for i in range(0, len(outputted_files)):
@@ -69,13 +75,32 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
     def test_input_file_search(self):
         logger.debug("\n \n \n test_input_file_search\n \n ")
-        input_dir = "assets\\notebook_inputs\\output_gbdy_cov\\"
+        input_dir = os.path.join("assets","notebook_inputs", "output_gbdy_cov")
+        logger.debug("input_dir: {}".format(input_dir))
         input_files = mgcg.input_file_search(input_dir)
+
         self.assertEqual(len(input_files), 12)
 
-    def test_input_files_to_dfs(self):
-        input_files = ["assets\\notebook_inputs\\output_gbdy_cov\\D121\\D121.geneBodyCoverage.txt", "assets\\notebook_inputs\\output_gbdy_cov\\D122\\D122.geneBodyCoverage.txt"]
-        inp_df_list = mgcg.input_files_to_dfs(input_files)
+        #check that the first 3 files are the correct ones
+        self.assertEqual(
+            os.path.join('assets','notebook_inputs','output_gbdy_cov','D121','D121.geneBodyCoverage.txt'), 
+            input_files[0]
+        )
+        self.assertEqual(
+            os.path.join('assets','notebook_inputs','output_gbdy_cov','D122','D122.geneBodyCoverage.txt'), 
+            input_files[1]
+        )
+        self.assertEqual(
+            os.path.join('assets','notebook_inputs','output_gbdy_cov','D123','D123.geneBodyCoverage.txt'), 
+            input_files[2]
+        )
+
+    def test_load_genebody_coverage_data(self):
+        input_files = [
+            os.path.join("assets", "notebook_inputs", "output_gbdy_cov", "D121", "D121.geneBodyCoverage.txt"),
+            os.path.join("assets", "notebook_inputs", "output_gbdy_cov", "D122", "D122.geneBodyCoverage.txt")
+        ]
+        inp_df_list = mgcg.load_genebody_coverage_data(input_files)
 
         #check that there are two data frames
         self.assertEqual(len(inp_df_list), 2)
@@ -107,7 +132,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
         counts_df = mgcg.merge_dfs_into_one([df, df2])
 
-        logger.debug(counts_df)
+        logger.debug("counts_df: {}".format(counts_df))
 
         #check that df is the right shape
         self.assertEqual(counts_df.shape[0], 200)
@@ -132,8 +157,8 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
         sum_counts_df = mgcg.sum_counts(counts_df)
 
-        logger.debug(counts_df)
-        logger.debug(sum_counts_df)
+        logger.debug("counts_df: {}".format(counts_df))
+        logger.debug("sum_counts_df: {}".format(sum_counts_df))
 
         #check that df is the right shape
         self.assertEqual(sum_counts_df.shape[0], 2)
@@ -144,8 +169,8 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
         self.assertEqual(sum_counts_df.total_coverage_counts[1], 29800000)
 
 
-    def test_join_counts_sum(self):
-        logger.debug("\n \n \n test_join_counts_sum\n \n ")
+    def test_calculate_percentile_df(self):
+        logger.debug("\n \n \n test_jcalculate_percentile_df\n \n ")
 
         sample_ids =[]
         for i in range(0, 200):
@@ -159,7 +184,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
         sum_counts_df = pandas.DataFrame(data = {"total_coverage_counts":[31800000, 29800000]}, index = ["FACE", "FAKE"])
         sum_counts_df.index.name = "sample_id"
 
-        percentile_df = mgcg.join_counts_sum(counts_df, sum_counts_df)
+        percentile_df = mgcg.calculate_percentile_df(counts_df, sum_counts_df)
         
 
         #check that df is the right shape
@@ -173,6 +198,12 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
         #check that FAKE coveragecounts are 2.8 mil and FACE are 3 mil
         self.assertEqual(percentile_df.total_coverage_counts[0], 29800000)
         self.assertEqual(percentile_df.total_coverage_counts[100], 31800000)
+
+        #check first twenty percentiles to make sure they are correct
+        for i in range(0, 20):
+             self.assertEqual(percentile_df.coverage_percentile[i], percentile_df.coverage_counts[i] / percentile_df.total_coverage_counts[i])
+
+
 
 
     def test_create_pct_df_list(self):
@@ -193,7 +224,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
         pct_df_list = mgcg.create_pct_df_list(percentile_df)
 
-        logger.debug(pct_df_list)
+        logger.debug("pct_df_list: {}".format(pct_df_list))
 
         #checking 20th
         self.assertEqual(pct_df_list[0].coverage_20pct[0],  0.005902)
@@ -221,27 +252,27 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
         pct_comp_df = mgcg.create_pct_comp_df([df20, df50, df80])
 
-        logger.debug(pct_comp_df)
+        logger.debug("pct_comp_df: {}".format(pct_comp_df))
 
         self.assertAlmostEqual(pct_comp_df.cov_diff_pct[0], 0.810320, places=5)
         self.assertAlmostEqual(pct_comp_df.cov_diff_pct[1], 0.867145, places=5)
         
 
-    def test_add_label_col_to_pct(self):
-        logger.debug("\n \n \n test_add_label_col_to_pct\n \n ")
+    def test_add_label_col(self):
+        logger.debug("\n \n \n test_add_label_col\n \n ")
 
         pct_comp_df = pandas.DataFrame(data = {"cov_diff_pct":[0.810320,0.867145]}, index = ["FAKE", "FACE"])
         pct_comp_df.index.name = "sample_id"
 
-        pct_comp_df = mgcg.add_label_col_to_pct(pct_comp_df)
+        pct_comp_df = mgcg.add_label_col(pct_comp_df)
 
-        logger.debug(pct_comp_df)
+        logger.debug("pct_comp_df: {}".format(pct_comp_df))
 
         self.assertEqual(pct_comp_df.label[0], "FAKE  0.81")
         self.assertEqual(pct_comp_df.label[1], "FACE  0.87")
 
-    def test_add_label_col_to_percentile(self):
-        logger.debug("\n \n \n test_add_label_col_to_percentile\n \n ")
+    def test_add_labels_based_on_sample_id(self):
+        logger.debug("\n \n \n test_add_labels_based_on_sample_id\n \n ")
 
         sample_ids =[]
         for i in range(0, 200):
@@ -254,7 +285,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
         percentile_df = pandas.DataFrame({"sample_id":sample_ids})
 
-        percentile_df = mgcg.add_label_col_to_percentile(percentile_df, pct_comp_df)
+        percentile_df = mgcg.add_labels_based_on_sample_id(percentile_df, pct_comp_df)
 
         self.assertEqual(percentile_df.label[0], "FAKE  0.81")
         self.assertEqual(percentile_df.label[100], "FACE  0.87")
@@ -267,10 +298,10 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
             logger.debug("\n \n \n test_save_to_tsv:  {}\n \n ".format(wkdir))
 
             output_all_pct_template = "{exp_id}_all_genebody_coverage_r{{}}x{{}}.txt".format(exp_id="MYEXPERIMENTID")
-            logger.debug(output_all_pct_template)
+            logger.debug("output_all_pct_template: {}".format(output_all_pct_template))
 
             output_compare_80_20_template = "{exp_id}_asymmetry_compare_80_20_r{{}}x{{}}.txt".format(exp_id="MYEXPERIMENTID")
-            logger.debug(output_compare_80_20_template)
+            logger.debug("output_compare_80_20_template: {}".format(output_compare_80_20_template))
 
             pct_comp_df = pandas.DataFrame(data = {"cov_diff_pct":[0.810320,0.867145], "label":["FAKE  0.81", "FACE  0.87"]}, index = ["FAKE", "FACE"])
 
@@ -290,19 +321,19 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
             out_f_pct = mgcg.save_to_tsv(wkdir, output_compare_80_20_template, pct_comp_df)
             out_f_percentile = mgcg.save_to_tsv(wkdir, output_all_pct_template, percentile_df)
 
-            logger.debug(out_f_pct)
-            logger.debug(out_f_percentile)
+            logger.debug("out_f_pct: {}".format(out_f_pct))
+            logger.debug("out_f_percentile: {}".format(out_f_percentile))
 
             self.assertTrue(os.path.exists(out_f_pct))
             self.assertTrue(os.path.exists(out_f_percentile))
 
 
-    def test_create_and_save_line_graph(self):
+    def test_create_and_save_genebody_coverage_graph(self):
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_create_and_save_line_graph:  {}\n \n ".format(wkdir))
+            logger.debug("\n \n \n test_create_and_save_genebody_coverage_graph:  {}\n \n ".format(wkdir))
 
             output_line_html_template = "{exp_id}_genebody_{{}}.html".format(exp_id="MYEXPERIMENTID")
-            logger.debug(output_line_html_template)
+            logger.debug("output_line_html_template: {}".format(output_line_html_template))
 
             sample_ids =[]
             labels = []
@@ -320,7 +351,7 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
 
             percentile_df = pandas.DataFrame({"coverage_percentile":coverage_percentile, "sample_id":sample_ids, "genebody_pct":list(range(1,101))+ list(range(1,101)), "label":labels})
 
-            output_filepath = mgcg.create_and_save_line_graph("coverage_percentile", wkdir, percentile_df, output_line_html_template)
+            output_filepath = mgcg.create_and_save_genebody_coverage_graph("coverage_percentile", wkdir, percentile_df, output_line_html_template)
 
             self.assertTrue(os.path.exists(output_filepath))
 
@@ -333,13 +364,39 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
             logger.debug("\n \n \n test_create_and_save_histograms:  {}\n \n ".format(wkdir))
 
             output_histogram_html_template = "{exp_id}_genebody_histogram_{{}}.html".format(exp_id="MYEXPERIMENTID")
-            logger.debug(output_histogram_html_template)
+            logger.debug("output_histogram_html_template: {}".format(output_histogram_html_template))
 
             pct_comp_df = pandas.DataFrame(data = {"cov_diff_pct":[0.810320,0.867145], "label":["FAKE  0.81", "FACE  0.87"]}, index = ["FAKE", "FACE"])
 
             output_filepath = mgcg.create_and_save_histograms("cov_diff_pct", wkdir, pct_comp_df, output_histogram_html_template)
 
             self.assertTrue(os.path.exists(output_filepath))
+
+
+    def test_build_output_template_dict(self):
+        with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
+            logger.debug("\n \n \n test_build_output_template_dict:  {}\n \n ".format(wkdir))
+
+            output_compare_80_20_template = "{exp_id}_asymmetry_compare_80_20_r{{}}x{{}}.txt".format(exp_id="MYEXPERIMENTID")
+            output_all_pct_template = "{exp_id}_all_genebody_coverage_r{{}}x{{}}.txt".format(exp_id="MYEXPERIMENTID")
+            output_line_html_template = "{exp_id}_genebody_{{}}.html".format(exp_id="MYEXPERIMENTID")
+            output_histogram_html_template = "{exp_id}_genebody_histogram_{{}}.html".format(exp_id="MYEXPERIMENTID")
+
+            output_template_dict = mgcg.build_output_template_dict("MYEXPERIMENTID")
+
+            #check that the values in the dict are the correct templates
+            self.assertEqual( output_template_dict["compare_80_20"], output_compare_80_20_template)
+            self.assertEqual( output_template_dict["all_pct"], output_all_pct_template)
+            self.assertEqual( output_template_dict["line_html"], output_line_html_template)
+            self.assertEqual( output_template_dict["histogram_html"], output_histogram_html_template)
+
+
+
+
+
+
+
+
 
 
 

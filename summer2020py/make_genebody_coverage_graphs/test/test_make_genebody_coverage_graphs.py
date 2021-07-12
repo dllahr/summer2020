@@ -27,11 +27,17 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
 class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
     def test_main(self):
+        logger.debug("\n \n \n test_main \n \n ")
+
+        input_dir = os.path.join("assets", "notebook_inputs", "output_gbdy_cov")
+        logger.debug("input_dir:  {}".format(input_dir))
+
         with tempfile.TemporaryDirectory(prefix=temp_wkdir_prefix) as wkdir:
-            logger.debug("\n \n \n test_main:  {}\n \n ".format(wkdir))
+            logger.debug("wkdir:  {}".format(wkdir))
+
             args = mgcg.build_parser().parse_args([
                     #"-s", source_dir, 
-                    "-i", "assets\\notebook_inputs\\output_gbdy_cov\\", 
+                    "-i", input_dir, 
                     "-o", wkdir,
                     "-of", "MYEXPERIMENTID"
                 ])
@@ -53,8 +59,8 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
             ]
 
             expected_files = [
-                "assets\\example_notebook_outputs\\MYEXPERIMENTID_all_genebody_coverage_r1200x6.txt",
-                "assets\\example_notebook_outputs\\MYEXPERIMENTID_asymmetry_compare_80_20_r12x6.txt"
+                os.path.join("assets", "example_notebook_outputs", "MYEXPERIMENTID_all_genebody_coverage_r1200x6.txt"),
+                os.path.join("assets", "example_notebook_outputs", "MYEXPERIMENTID_asymmetry_compare_80_20_r12x6.txt")
             ]
 
             for i in range(0, len(outputted_files)):
@@ -76,12 +82,24 @@ class TestMakeGeneBodyCoverageGraphs(unittest.TestCase):
         self.assertEqual(len(input_files), 12)
 
         #check that the first 3 files are the correct ones
-        self.assertEqual('assets\\notebook_inputs\\output_gbdy_cov\\D121\\D121.geneBodyCoverage.txt', input_files[0])
-        self.assertEqual('assets\\notebook_inputs\\output_gbdy_cov\\D122\\D122.geneBodyCoverage.txt', input_files[1])
-        self.assertEqual('assets\\notebook_inputs\\output_gbdy_cov\\D123\\D123.geneBodyCoverage.txt', input_files[2])
+        self.assertEqual(
+            os.path.join('assets','notebook_inputs','output_gbdy_cov','D121','D121.geneBodyCoverage.txt'), 
+            input_files[0]
+        )
+        self.assertEqual(
+            os.path.join('assets','notebook_inputs','output_gbdy_cov','D122','D122.geneBodyCoverage.txt'), 
+            input_files[1]
+        )
+        self.assertEqual(
+            os.path.join('assets','notebook_inputs','output_gbdy_cov','D123','D123.geneBodyCoverage.txt'), 
+            input_files[2]
+        )
 
     def test_load_genebody_coverage_data(self):
-        input_files = ["assets\\notebook_inputs\\output_gbdy_cov\\D121\\D121.geneBodyCoverage.txt", "assets\\notebook_inputs\\output_gbdy_cov\\D122\\D122.geneBodyCoverage.txt"]
+        input_files = [
+            os.path.join("assets", "notebook_inputs", "output_gbdy_cov", "D121", "D121.geneBodyCoverage.txt"),
+            os.path.join("assets", "notebook_inputs", "output_gbdy_cov", "D122", "D122.geneBodyCoverage.txt")
+        ]
         inp_df_list = mgcg.load_genebody_coverage_data(input_files)
 
         #check that there are two data frames

@@ -25,14 +25,6 @@ base_output_template_dict = {
     # fill in others here. NB remove output and template from name since we know that given the dict name
 }
 
-
-def build_output_template_dict(prefix):
-    output_template_dict = {
-        name:template.format(prefix = prefix) for name, template in base_output_template_dict.items()
-    }
-    return output_template_dict
-
-
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--verbose", "-v", help="Whether to print a bunch of output.", action="store_true", default=False)
@@ -50,6 +42,12 @@ def build_parser():
 
     return parser
 
+
+def build_output_template_dict(prefix):
+    output_template_dict = {
+        name:template.format(prefix = prefix) for name, template in base_output_template_dict.items()
+    }
+    return output_template_dict
 
 def input_file_search(input_dir):
     input_search = os.path.join(input_dir, "*", "*.geneBodyCoverage.txt")
@@ -71,7 +69,9 @@ def load_genebody_coverage_data(input_files):
 
         #normpath converts any file seperator to \ so this works on both Mac and Windows
 
-        sample_id = os.path.normpath(inp_f).split("\\")[-2]
+        sample_id = os.path.basename(
+            os.path.dirname(inp_f)
+        )
         logger.debug("sample_id:{}".format(sample_id))
 
 

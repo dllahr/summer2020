@@ -19,24 +19,32 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--verbose", "-v", help="Whether to logger.debug a bunch of output.", action="store_true", default=False)
-    parser.add_argument("--hostname", help="lims db host name", type=str, default="getafix-v")
+
+    parser.add_argument("--template_path", "-t", help = "directory where the template file is", type = str, required = True)
+
+    parser.add_argument("--gctx_path", "-g", help = "path to the gctx file", type = str, required = True)
+
+    parser.add_argument("--output_path", "-o", help = "directory where outputs will go", type = str)
+
+    parser.add_argument("--row_or_col", "-r", help = "row creates dendro and grops row, col does the same for col, both does both", type = str)
+
+    parser.add_argument("--num_row", "-n", help = "number of rows to get from data, is all if not given", type = int, default = -1)
+
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
         type=str, default=summer2020py.default_config_filepath)
     parser.add_argument("--config_section", help="section of config file to use for information about how to connect to CDD API, ArxLab API etc.",
         type=str, default=summer2020py.default_config_section)
 
-    
-    # To make --option1 and --option2 mutually exclusive, one can define mutually_exclusive_group in argparse,
-    # argparse asserts that the options added to the group are not used at the same time and throws exception if otherwise
-    mutually_exclusive_group = parser.add_mutually_exclusive_group()
-    mutually_exclusive_group.add_argument("--option1", action="store", dest="option1", help="provide argument for option1", default=None)
-    mutually_exclusive_group.add_argument("--option2", action="store", dest="option2", help="provide argument for option2", default=None)
     return parser
 
 
 def load_data(num_rows, path):
     gctoo = cmapPy.pandasGEXpress.parse.parse(path)
+
+    if num_rows == -1:
+        num_rows = len(gctoo.data_df.index)
+
     logger.debug("gctoo{}".format(gctoo))
     data_df_rows_chopped = gctoo.data_df.head(num_rows)
 
@@ -101,9 +109,7 @@ def sort_by_label_list(df_to_sort, row_labels, col_labels):
 
     return sorted_df, label_df
 
-def get_cluster_centers(row_or_col, data_df, AffinityProp_cluster_centers_indices):
-    if row_or_col == "row":
-        data_df = data_df.transpose()
+def get_cluster_centers(data_df, AffinityProp_cluster_centers_indices):
     
     cluster_centers = []
     
@@ -124,7 +130,6 @@ def get_child_counts(linkage_matrix):
 
      # create the counts of samples under each node
     counts = numpy.zeros(len(childs))
-    logger.debug("counts: {}".format(counts))
     n_samples = len(linkage_matrix) + 1
     for i, merge in enumerate(childs):
         current_count = 0
@@ -171,9 +176,6 @@ def change_labels(label):
 
     for i in range(0, len(label)):
         label_index.append(label.index(i))
-        
-
-    logger.debug("label_index : {}".format(label_index))
 
 
 
@@ -182,12 +184,17 @@ def change_labels(label):
 def reorder_super_cluster(label_df, super_dendro_labels_index):
     num_col = len(label_df.columns) - 1
     num_row = len(label_df.index) - 1
+    
+    logger.debug("num_col, num_row")
+    
+    logger.debug(num_col)
+    logger.debug(num_row)
 
     for i in range(0, num_col + 1):
         val = int(label_df.iloc[num_row, i])
         if val != 20000 and val != numpy.NaN:
             label_df.iloc[num_row, (i)] = super_dendro_labels_index[val]
-            label_df.iloc[i, num_col] = super_dendro_labels_index[val]
+            #label_df.iloc[i, num_col] = super_dendro_labels_index[val]
             
     logger.debug("label_df: {}".format(label_df))
 
@@ -233,9 +240,6 @@ def prepare_where(df_super_linkage_matrix, current_sub):
         where_col = 1
         not_where = 0
         
-    if current_sub == 59:
-        logger.debug("WHERE")
-        logger.debug(where)
         
     return where, where_col, not_where
 
@@ -305,6 +309,8 @@ def prepare_super(df_super_linkage_matrix, handy_values):
 def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df):
     transposed_label_df = label_df.transpose()
 
+    #commented out the logger.debug statements as printing out anything 1000+ times adds up
+
     for current_sub in range(0, len(super_dendro_labels_index)):
     #get all the values in the current sub cluster
     
@@ -321,8 +327,8 @@ def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_
 
         where, where_col, not_where = prepare_where(df_super_linkage_matrix, current_sub)
 
-        logger.debug("WHERE")
-        logger.debug(where)
+        #logger.debug("WHERE")
+        #logger.debug(where)
         
         if sub_cluster.shape[0] != 1:
 
@@ -372,8 +378,8 @@ def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_
             #modify where line and add it to end of sub cluster matrix 
             where.at[new_location, where_col] =  new_location + len_super +  (2 * len_sub) 
 
-            logger.debug("n_super_samples")
-            logger.debug(n_super_samples)
+            #logger.debug("n_super_samples")
+            #logger.debug(n_super_samples)
 
             if where.loc[new_location, not_where] >= n_super_samples:
                     if where.loc[new_location, not_where] - n_super_samples < new_location:
@@ -383,8 +389,8 @@ def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_
 
             where.at[new_location, 3] =  where.loc[new_location, 3] + n_sub_samples
 
-            logger.debug("WHERE")
-            logger.debug(where)
+            #logger.debug("WHERE")
+            #logger.debug(where)
 
             #a really dumb way to rename the index
             #.setindex needs a col to set as the index 
@@ -393,20 +399,19 @@ def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_
 
             df_super_linkage_matrix = prepare_super(df_super_linkage_matrix, handy_values)
 
-            logger.debug("REMOVING")
-            logger.debug(new_location)
-            logger.debug("TOTAL SUB")
-            logger.debug(total_sub)
-            logger.debug("NEW LOCATION")
-            logger.debug(new_location)
-            logger.debug("N_SUB_SAMPLES")
-            logger.debug(n_sub_samples)
-            logger.debug("len_sub")
-            logger.debug(len_sub)
-            logger.debug("len_super")
-            logger.debug(len_super)
+            #logger.debug("REMOVING")
+            #logger.debug(new_location)
+            #logger.debug("TOTAL SUB")
+            #logger.debug(total_sub)
+            #logger.debug("NEW LOCATION")
+            #logger.debug(new_location)
+            #logger.debug("N_SUB_SAMPLES")
+            #logger.debug(n_sub_samples)
+            #logger.debug("len_sub")
+            #logger.debug(len_sub)
+            #logger.debug("len_super")
+            #logger.debug(len_super)
 
-            logger.debug("CHANGE TO INDEX")
             df_super_linkage_matrix.index = list(range(0, new_location)) + list(range(new_location + len_sub + 1 , len_super + len_sub))
 
             #merge then sort by index 
@@ -416,9 +421,14 @@ def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_
             total_linkage_matrix = new_linkage_matrix
             
         else:
-            new_linkage_matrix[where_col + 4][where.index[0]] = sub_cluster.index[0]
+            total_linkage_matrix[where_col + 4][where.index[0]] = data_df.columns.get_loc(sub_cluster.index[0])    
+            
 
     logger.debug(new_linkage_matrix)
+    
+    logger.debug("data_df.columns")
+    logger.debug(data_df.columns)
+    
     return new_linkage_matrix
 
 def col_4_5_updating_1_2(new_linkage_matrix):
@@ -468,21 +478,26 @@ def create_dendrogram_from_df(row_or_col, data_df):
     AffinityProp = run_AffinityProp(row_or_col, data_df)
 
     if row_or_col == "row":
-        col_labels = range(0, (len(data_df.columns)))
-        row_labels = AffinityProp.labels_
+        data_df = data_df.transpose()
+        col_labels = AffinityProp.labels_
+        row_labels = range(0, (len(data_df.index)))
+        
+        
     if row_or_col == "col":
+        
         col_labels = AffinityProp.labels_
         row_labels = range(0, (len(data_df.index)))
 
+
     sorted_df, label_df = sort_by_label_list(data_df, row_labels, col_labels)
 
-    cluster_centers = get_cluster_centers(row_or_col, data_df, AffinityProp.cluster_centers_indices_)
+    cluster_centers = get_cluster_centers(data_df, AffinityProp.cluster_centers_indices_)
 
     super_linkage_matrix, super_r_dict = super_cluster(cluster_centers)
 
     super_dendro_labels_index = change_labels(super_r_dict["leaves"])
     
-    logger.debug("type(label_df): {}".format(type(label_df)))
+    logger.debug("(label_df): {}".format((label_df)))
 
     label_df = reorder_super_cluster(label_df, super_dendro_labels_index)
 
@@ -492,7 +507,7 @@ def create_dendrogram_from_df(row_or_col, data_df):
     num_row = len(data_df.index)
 
     sub_and_super_linkage_matrix = loop_through_clusters(super_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df) 
-
+    
     sub_and_super_linkage_matrix = fix_linkage_matrix(sub_and_super_linkage_matrix)
 
     r_dict2 = run_scipy_cluster_dendrogram(sub_and_super_linkage_matrix)
@@ -505,6 +520,9 @@ def create_dendrogram_from_df(row_or_col, data_df):
 
     tree = scipy.cluster.hierarchy.to_tree(sub_and_super_linkage_matrix,False)
     newick = getNewick(tree, "", tree.dist, r_dict2["leaves"])
+
+    if row_or_col == "row":
+        sas_sorted_df = sas_sorted_df.transpose()
 
 
     return newick, sas_sorted_df, super_and_sub_dendro_labels_index
@@ -567,8 +585,6 @@ def prepare_metadata(gctoo, data_df, super_and_sub_dendro_labels_index, row_labe
     col_metadata = gctoo.col_metadata_df
     flipped_super_and_sub_dendro_labels_index = [len(super_and_sub_dendro_labels_index) - x for x in super_and_sub_dendro_labels_index]
 
-    logger.debug("flipped_super_and_sub_dendro_labels_index: {}".format(flipped_super_and_sub_dendro_labels_index))
-
     flip_col_metadata_names_df = pd.DataFrame(flipped_super_and_sub_dendro_labels_index)
     flip_col_metadata_names_df.index = data_df.columns
 
@@ -586,11 +602,7 @@ def prepare_metadata(gctoo, data_df, super_and_sub_dendro_labels_index, row_labe
 
     return none_sorted_col_metadata_df, sorted_row_metadata_df
 
-    
-
-
-
-def create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_metadata_df, newick):
+def create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_metadata_df, col_newick, row_newick):
     final_sorted_df_numpy =  sas_sorted_df.to_numpy()
     flipped = numpy.flip(final_sorted_df_numpy)
 
@@ -598,18 +610,13 @@ def create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_
     json_object = json.load(template_file)
     template_file.close()
 
-    json_object["columnDendrogram"] = newick
-    json_object["rowDendrogram"] = newick
-
-    del json_object["rowDendrogram"]
+    json_object["columnDendrogram"] = col_newick
+    json_object["rowDendrogram"] = row_newick
 
     dataset = json_object["dataset"]
 
     dataset["rows"] = len(flipped)
     dataset["columns"] = len(flipped[0])
-
-    print("flipped.tolist()")
-    print(flipped.tolist()[0])
 
     dataset["seriesArrays"] = [flipped.tolist()]
 
@@ -646,27 +653,41 @@ def create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_
     return output_path
 
 def main(args):
-    gctx_path = os.path.join("2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx")
-    template_path = os.path.join("template.json")
-    output_path = os.path.join("super_and_sub_file.json")
+    #gctx_path = os.path.join("2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx")
+    #template_path = os.path.join("template.json")
+    #output_path = os.path.join("super_and_sub_file.json")
 
-    data_df_rows_chopped, gctoo = load_data(3000, gctx_path)
 
+    gctx_path = args.gctx_path
+    template_path = args.template_path
+    output_path = args.output_path
+
+
+    data_df_rows_chopped, gctoo = load_data(args.num_row, gctx_path)
+    
     num_col = len(data_df_rows_chopped.columns)
     num_row = len(data_df_rows_chopped.index)
 
-    newick, sas_sorted_df, super_and_sub_dendro_labels_index = create_dendrogram_from_df("col", data_df_rows_chopped)
+    if args.row_or_col == "col":
+        col_newick, sas_sorted_df, col_super_and_sub_dendro_labels_index = create_dendrogram_from_df("col", data_df_rows_chopped)
+        row_super_and_sub_dendro_labels_index = list(range(0, (len(data_df_rows_chopped.index))))
+        row_newick = None
 
-    row_labels = list(range(0, (len(data_df_rows_chopped.index))))
+    elif args.row_or_col == "row":
+        row_newick, sas_sorted_df, row_super_and_sub_dendro_labels_index = create_dendrogram_from_df("row", sas_sorted_df)
+        col_super_and_sub_dendro_labels_index = list(range(0, (len(data_df_rows_chopped.columns))))
+        col_newick = None
 
-    col_metadata_df, row_metadata_df = prepare_metadata(gctoo, data_df_rows_chopped, super_and_sub_dendro_labels_index,  row_labels, num_row, num_col)
+    elif args.row_or_col == "both":
+        col_newick, sas_sorted_df, col_super_and_sub_dendro_labels_index = create_dendrogram_from_df("col", data_df_rows_chopped)
+        row_newick, sas_sorted_df, row_super_and_sub_dendro_labels_index = create_dendrogram_from_df("row", sas_sorted_df)
+    
 
-    create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_metadata_df, newick)
+    col_metadata_df, row_metadata_df = prepare_metadata(gctoo, data_df_rows_chopped, col_super_and_sub_dendro_labels_index,  row_super_and_sub_dendro_labels_index, num_row, num_col)
+
+    create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_metadata_df, col_newick, row_newick)
 
     return output_path
-
-
-    logger.info("hello world!")
 
 
 if __name__ == "__main__":

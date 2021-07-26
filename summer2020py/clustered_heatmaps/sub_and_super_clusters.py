@@ -117,6 +117,10 @@ def get_cluster_centers(data_df, AffinityProp_cluster_centers_indices):
     logger.debug("AffinityProp_cluster_centers_indices: {}".format(AffinityProp_cluster_centers_indices))
     logger.debug("len(AffinityProp_cluster_centers_indices): {}".format(len(AffinityProp_cluster_centers_indices)))
     for i in range (0, len(AffinityProp_cluster_centers_indices)):
+        logger.debug("AffinityProp_cluster_centers_indices[i]:{}".format(AffinityProp_cluster_centers_indices[i]))
+        logger.debug("data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]:{}".format(data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]))
+        logger.debug("(data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]).to_numpy():{}".format((data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]).to_numpy()))
+
         cluster_column = (data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]).to_numpy()
         cluster_centers.append(cluster_column)
 
@@ -572,6 +576,7 @@ def prepare_metadata(gctoo, data_df, super_and_sub_dendro_labels_index, row_labe
     flipped_row_labels = [len(row_labels) - x for x in row_labels]
 
     flip_row_metadata_names_df = pd.DataFrame(flipped_row_labels)
+
     flip_row_metadata_names_df.index = data_df.index
 
     row_metadata = row_metadata.join(flip_row_metadata_names_df)
@@ -682,7 +687,6 @@ def main(args):
         col_newick, sas_sorted_df, col_super_and_sub_dendro_labels_index = create_dendrogram_from_df("col", data_df_rows_chopped)
         row_newick, sas_sorted_df, row_super_and_sub_dendro_labels_index = create_dendrogram_from_df("row", sas_sorted_df)
     
-
     col_metadata_df, row_metadata_df = prepare_metadata(gctoo, data_df_rows_chopped, col_super_and_sub_dendro_labels_index,  row_super_and_sub_dendro_labels_index, num_row, num_col)
 
     create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_metadata_df, col_newick, row_newick)

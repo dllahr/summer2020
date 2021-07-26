@@ -7,6 +7,7 @@ import os.path
 import pandas as pd
 import numpy
 import scipy
+import cmapPy.pandasGEXpress
 
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
@@ -93,6 +94,7 @@ class TestSubandSuperClusters(unittest.TestCase):
         col_cluster_centers = sasc.get_cluster_centers(tiny_test_data_df, cluster_centers_indices_col)
         logger.debug("col_cluster_centers: {}".format(col_cluster_centers))
 
+        tiny_test_data_df = tiny_test_data_df.transpose()
         row_cluster_centers = sasc.get_cluster_centers(tiny_test_data_df, cluster_centers_indices_row)
         logger.debug("row_cluster_centers: {}".format(row_cluster_centers))
 
@@ -354,14 +356,37 @@ class TestSubandSuperClusters(unittest.TestCase):
 
 
     def test_prepare_metadata(self):
-        #wondering about how to test this
-        #prepare_metadata(gctoo, data_df, super_and_sub_dendro_labels_index, row_labels, num_row, num_col)
-        #here are the inputs
-        #gctoo, data_df, num_row and num_col are easy to get
-        #the problem is the other two
-        #which would be arrays of len 1305 and I don't feel like manually typing those out
-        #best thing would be to create a fake gctoo for testing but I am not sure how to do that
-        pass
+        super_dendro_labels_index = [0, 1, 0, 1]
+        row_labels = [1, 0, 1, 0, 1, 0, 1]
+        data_df = pd.DataFrame([[1,2,3,3],[1,4,4,5],[4,4,4,5],[1,0,0,5],[4,2,2,3],[4,0,0,3],[0,0,0,1]])
+        num_col = len(data_df.columns)
+        num_row = len(data_df.index)
+
+        row_meta = pd.DataFrame(["one", "two", "three", "four", "five", "six", "seven"])
+        row_meta.columns = ["number"]
+        col_meta = pd.DataFrame(["one", "two", "three", "four"])
+        col_meta.columns = ["number"]
+
+        gctoo = cmapPy.pandasGEXpress.GCToo.GCToo(data_df, row_metadata_df=row_meta, col_metadata_df=col_meta, src=None, version=None, make_multiindex=False, logger_name='cmap_logger')
+
+        none_sorted_col_metadata_df, sorted_row_metadata_df = sasc.prepare_metadata(gctoo, data_df, super_dendro_labels_index, row_labels, num_row, num_col)
+
+        logger.debug("none_sorted_col_metadata_df: {}".format(none_sorted_col_metadata_df)) 
+        logger.debug("sorted_row_metadata_df: {}".format(sorted_row_metadata_df)) 
+
+
+        expected_outputrow_meta = pd.DataFrame(["one", "three", "five", "seven", "two","four", "six",])
+        expected_outputrow_meta.index = [0, 2, 4, 6, 1, 3, 5]
+        expected_outputrow_meta.columns = ["number"]
+        expected_outputcol_meta = pd.DataFrame(["two", "four", "one","three", ])
+        expected_outputcol_meta.columns = ["number"]
+        expected_outputcol_meta.index = [1, 3, 0, 2]
+
+        self.assertTrue(expected_outputrow_meta.equals(sorted_row_metadata_df))
+        self.assertTrue(expected_outputcol_meta.equals(none_sorted_col_metadata_df))
+
+
+
 
     def test_create_json(self):
 

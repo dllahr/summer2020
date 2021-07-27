@@ -20,15 +20,15 @@ def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--verbose", "-v", help="Whether to logger.debug a bunch of output.", action="store_true", default=False)
 
-    parser.add_argument("--template_path", "-t", help = "directory where the template file is", type = str, required = True)
+    #parser.add_argument("--template_path", "-t", help = "directory where the template file is", type = str, required = True)
 
-    parser.add_argument("--gctx_path", "-g", help = "path to the gctx file", type = str, required = True)
+    parser.add_argument("--input_GCToo_file", "-i", help = "path to the gctx / gctoo file", type = str, required = True)
 
     parser.add_argument("--output_path", "-o", help = "directory where outputs will go", type = str)
 
-    parser.add_argument("--row_or_col", "-r", help = "row creates dendro and grops row, col does the same for col, both does both", type = str)
+    parser.add_argument("--row_or_col", "-r", help = "row creates dendro and grops row, col does the same for col, both does both", choices=['row', 'col', 'both'],  type = str, required = True)
 
-    parser.add_argument("--num_row", "-n", help = "number of rows to get from data, is all if not given", type = int, default = -1)
+    parser.add_argument("--num_row", "-n", help = "only use first num_row of data", type = int, default = None)
 
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
@@ -40,15 +40,21 @@ def build_parser():
 
 
 def load_data(num_rows, path):
-    gctoo = cmapPy.pandasGEXpress.parse.parse(path)
 
-    if num_rows == -1:
-        num_rows = len(gctoo.data_df.index)
+    #way of handeling when num_rows is not given
+    try:
+        ridx_val = list(range(num_rows))
+    except TypeError:
+        ridx_val = num_rows
+
+
+
+    gctoo = cmapPy.pandasGEXpress.parse.parse(path, ridx = ridx_val)
+
 
     logger.debug("gctoo{}".format(gctoo))
-    data_df_rows_chopped = gctoo.data_df.head(num_rows)
 
-    return data_df_rows_chopped, gctoo
+    return gctoo
 
 def run_AffinityProp(row_or_col, data_df):
     if row_or_col == "col":
@@ -117,9 +123,6 @@ def get_cluster_centers(data_df, AffinityProp_cluster_centers_indices):
     logger.debug("AffinityProp_cluster_centers_indices: {}".format(AffinityProp_cluster_centers_indices))
     logger.debug("len(AffinityProp_cluster_centers_indices): {}".format(len(AffinityProp_cluster_centers_indices)))
     for i in range (0, len(AffinityProp_cluster_centers_indices)):
-        logger.debug("AffinityProp_cluster_centers_indices[i]:{}".format(AffinityProp_cluster_centers_indices[i]))
-        logger.debug("data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]:{}".format(data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]))
-        logger.debug("(data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]).to_numpy():{}".format((data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]).to_numpy()))
 
         cluster_column = (data_df.iloc[:, AffinityProp_cluster_centers_indices[i]]).to_numpy()
         cluster_centers.append(cluster_column)
@@ -483,14 +486,9 @@ def create_dendrogram_from_df(row_or_col, data_df):
 
     if row_or_col == "row":
         data_df = data_df.transpose()
-        col_labels = AffinityProp.labels_
-        row_labels = range(0, (len(data_df.index)))
-        
-        
-    if row_or_col == "col":
-        
-        col_labels = AffinityProp.labels_
-        row_labels = range(0, (len(data_df.index)))
+
+    col_labels = AffinityProp.labels_
+    row_labels = range(0, (len(data_df.index)))
 
 
     sorted_df, label_df = sort_by_label_list(data_df, row_labels, col_labels)
@@ -507,7 +505,6 @@ def create_dendrogram_from_df(row_or_col, data_df):
 
     super_linkage_matrix = update_super_matrix(super_linkage_matrix, super_dendro_labels_index)
 
-    num_col = len(data_df.columns)
     num_row = len(data_df.index)
 
     sub_and_super_linkage_matrix = loop_through_clusters(super_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df) 
@@ -516,9 +513,7 @@ def create_dendrogram_from_df(row_or_col, data_df):
 
     r_dict2 = run_scipy_cluster_dendrogram(sub_and_super_linkage_matrix)
 
-    df_r_dict2_labels = r_dict2["leaves"]
-
-    super_and_sub_dendro_labels_index = change_labels(df_r_dict2_labels)
+    super_and_sub_dendro_labels_index = change_labels(r_dict2["leaves"])
 
     sas_sorted_df, sas_label_df = sort_by_label_list(data_df, row_labels, super_and_sub_dendro_labels_index)
 
@@ -529,7 +524,7 @@ def create_dendrogram_from_df(row_or_col, data_df):
         sas_sorted_df = sas_sorted_df.transpose()
 
 
-    return newick, sas_sorted_df, super_and_sub_dendro_labels_index
+    return newick, sas_sorted_df
 
 def create_col_and_row_template(isstring, field):
     col_and_row_template = {
@@ -570,53 +565,36 @@ def create_col_and_row_metadata_template(isstring, field, array):
         
     return col_and_row_metadata_template
 
-def prepare_metadata(gctoo, data_df, super_and_sub_dendro_labels_index, row_labels, num_row, num_col):
-    row_metadata = gctoo.row_metadata_df
+def prepare_gctoo_for_json(gctoo):
+    sas_flipped_index = numpy.flip(list(gctoo.data_df.index))
+    sas_flipped_col = numpy.flip(list(gctoo.data_df.columns))
 
-    flipped_row_labels = [len(row_labels) - x for x in row_labels]
+    gctoo.row_metadata = gctoo.row_metadata_df.loc[sas_flipped_index]
+    gctoo.col_metadata = gctoo.col_metadata_df.loc[sas_flipped_col]
 
-    flip_row_metadata_names_df = pd.DataFrame(flipped_row_labels)
+    gctoo.data_df = gctoo.data_df.loc[sas_flipped_index]
+    gctoo.data_df = gctoo.data_df.loc[:, sas_flipped_col]
 
-    flip_row_metadata_names_df.index = data_df.index
+    logger.debug("gctoo.row_metadata_df:{}".format(gctoo.row_metadata))
+    logger.debug("gctoo.col_metadata_df:{}".format(gctoo.col_metadata))
+    logger.debug("gctoo.data_df: {}".format(gctoo.data_df))
 
-    row_metadata = row_metadata.join(flip_row_metadata_names_df)
+    return gctoo
 
-    logger.debug("row_metadata: {}".format(row_metadata))
+def create_json(template, output_path, gctoo, col_newick, row_newick):
+    sas_flipped_index = numpy.flip(list(gctoo.data_df.index))
+    sas_flipped_col = numpy.flip(list(gctoo.data_df.columns))
 
-    sorted_row_metadata_df = row_metadata.sort_values(0)
+    flipped = gctoo.data_df.to_numpy()
 
-    sorted_row_metadata_df.drop(0, axis = 1, inplace = True)
-
-    col_metadata = gctoo.col_metadata_df
-    flipped_super_and_sub_dendro_labels_index = [len(super_and_sub_dendro_labels_index) - x for x in super_and_sub_dendro_labels_index]
-
-    flip_col_metadata_names_df = pd.DataFrame(flipped_super_and_sub_dendro_labels_index)
-    flip_col_metadata_names_df.index = data_df.columns
-
-    col_metadata[num_col] = flip_col_metadata_names_df
-
-    sorted_col_metadata_df = col_metadata.sort_values(num_col)
-
-    sorted_col_metadata_df.drop(num_col, axis = 1, inplace = True)
-
-    logger.debug("sorted_col_metadata_df: {}".format(sorted_col_metadata_df))
-
-    none_sorted_col_metadata_df = sorted_col_metadata_df.where(sorted_col_metadata_df.notnull(), None)
-
-    logger.debug("none_sorted_col_metadata_df: {}".format(none_sorted_col_metadata_df))
-
-    return none_sorted_col_metadata_df, sorted_row_metadata_df
-
-def create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_metadata_df, col_newick, row_newick):
-    final_sorted_df_numpy =  sas_sorted_df.to_numpy()
-    flipped = numpy.flip(final_sorted_df_numpy)
-
-    template_file = open(template_path, "r")
-    json_object = json.load(template_file)
-    template_file.close()
+    #template_file = open(template_path, "r")
+    json_object = json.loads(template)
+    #template_file.close()
 
     json_object["columnDendrogram"] = col_newick
     json_object["rowDendrogram"] = row_newick
+
+    json_object["name"] = os.path.splitext(output_path)[0]
 
     dataset = json_object["dataset"]
 
@@ -635,22 +613,24 @@ def create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_
 
     dataset["rowMetadataModel"]["vectors"] = []
     dataset["columnMetadataModel"]["vectors"] = []
-
-
-    sas_flipped_index = numpy.flip(list(sas_sorted_df.index))
-    sas_flipped_col = numpy.flip(list(sas_sorted_df.columns))
                                                                                                         
     dataset["rowMetadataModel"]["vectors"].append(create_col_and_row_metadata_template(True, "rid", sas_flipped_index.tolist())) 
     dataset["columnMetadataModel"]["vectors"].append(create_col_and_row_metadata_template(True, "cid", sas_flipped_col.tolist()))
 
 
-    for col in col_metadata_df.iteritems():
-        json_object["columns"].append(create_col_and_row_template(True, col[0]))
-        dataset["columnMetadataModel"]["vectors"].append(create_col_and_row_metadata_template(True, col[0], col[1].to_list())) 
+    for col in gctoo.col_metadata_df.iteritems():
+        Nan_to_none = col[1].where(col[1].notnull(), None)
 
-    for row in row_metadata_df.iteritems(): 
+
+        json_object["columns"].append(create_col_and_row_template(True, col[0]))
+        dataset["columnMetadataModel"]["vectors"].append(create_col_and_row_metadata_template(True, col[0], Nan_to_none.to_list())) 
+
+    for row in gctoo.row_metadata_df.iteritems(): 
+        Nan_to_none = row[1].where(row[1].notnull(), None)
+
         json_object["rows"].append(create_col_and_row_template(True, row[0]))
-        dataset["rowMetadataModel"]["vectors"].append(create_col_and_row_metadata_template(True, row[0], row[1].to_list()))
+        dataset["rowMetadataModel"]["vectors"].append(create_col_and_row_metadata_template(True, row[0], Nan_to_none.to_list()))
+
 
     output_file = open(output_path, "w")
     json.dump(json_object, output_file)
@@ -658,38 +638,32 @@ def create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_
     return output_path
 
 def main(args):
-    #gctx_path = os.path.join("2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx")
-    #template_path = os.path.join("template.json")
-    #output_path = os.path.join("super_and_sub_file.json")
 
 
-    gctx_path = args.gctx_path
-    template_path = args.template_path
+    input_GCToo_file = args.input_GCToo_file
     output_path = args.output_path
 
 
-    data_df_rows_chopped, gctoo = load_data(args.num_row, gctx_path)
+    gctoo = load_data(args.num_row, input_GCToo_file)
     
-    num_col = len(data_df_rows_chopped.columns)
-    num_row = len(data_df_rows_chopped.index)
 
     if args.row_or_col == "col":
-        col_newick, sas_sorted_df, col_super_and_sub_dendro_labels_index = create_dendrogram_from_df("col", data_df_rows_chopped)
-        row_super_and_sub_dendro_labels_index = list(range(0, (len(data_df_rows_chopped.index))))
+        col_newick, gctoo.data_df = create_dendrogram_from_df("col", gctoo.data_df)
         row_newick = None
 
     elif args.row_or_col == "row":
-        row_newick, sas_sorted_df, row_super_and_sub_dendro_labels_index = create_dendrogram_from_df("row", sas_sorted_df)
-        col_super_and_sub_dendro_labels_index = list(range(0, (len(data_df_rows_chopped.columns))))
+        row_newick, gctoo.data_df= create_dendrogram_from_df("row", gctoo.data_df)
         col_newick = None
 
     elif args.row_or_col == "both":
-        col_newick, sas_sorted_df, col_super_and_sub_dendro_labels_index = create_dendrogram_from_df("col", data_df_rows_chopped)
-        row_newick, sas_sorted_df, row_super_and_sub_dendro_labels_index = create_dendrogram_from_df("row", sas_sorted_df)
-    
-    col_metadata_df, row_metadata_df = prepare_metadata(gctoo, data_df_rows_chopped, col_super_and_sub_dendro_labels_index,  row_super_and_sub_dendro_labels_index, num_row, num_col)
+        col_newick, gctoo.data_df = create_dendrogram_from_df("col", gctoo.data_df)
+        row_newick, gctoo.data_df = create_dendrogram_from_df("row", gctoo.data_df)
 
-    create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_metadata_df, col_newick, row_newick)
+    
+    gctoo = prepare_gctoo_for_json(gctoo)
+
+
+    create_json(summer2020py.morpheus_heatmap_template, output_path, gctoo,  col_newick, row_newick)
 
     return output_path
 

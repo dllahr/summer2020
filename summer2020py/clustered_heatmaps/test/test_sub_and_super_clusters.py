@@ -1,5 +1,6 @@
 import unittest
 import logging
+import summer2020py
 import summer2020py.setup_logger as setup_logger
 import summer2020py.clustered_heatmaps.sub_and_super_clusters as sasc
 
@@ -31,9 +32,9 @@ class TestSubandSuperClusters(unittest.TestCase):
         logger.debug("\n \n \n test_load_data:  \n \n ")
         gctx_path = os.path.join("2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx")
 
-        data_df_rows_chopped, gctoo = sasc.load_data(20, gctx_path)
+        gctoo = sasc.load_data(20, gctx_path)
 
-        self.assertEqual(data_df_rows_chopped.shape, (20, 1305))
+        self.assertEqual(gctoo.data_df.shape, (20, 1305))
 
     def test_run_AffinityProp(self):
         logger.debug("\n \n \n test_run_AffinityProp:  \n \n ")
@@ -307,11 +308,10 @@ class TestSubandSuperClusters(unittest.TestCase):
         tiny_test_data_df = pd.DataFrame([[1, 2, 3, 3], [1, 4, 5, 4], [1, 0, 5, 0],[4, 2, 3, 2], [4, 4, 5, 4], [4, 0, 3, 0]])
 
 
-        newick, sas_sorted_df, super_and_sub_dendro_labels_index = sasc.create_dendrogram_from_df("row", tiny_test_data_df)
+        newick, sas_sorted_df = sasc.create_dendrogram_from_df("row", tiny_test_data_df)
 
         logger.debug("newick:{}".format(newick))
         logger.debug("sas_sorted_df:{}".format(sas_sorted_df))
-        logger.debug("super_and_sub_dendro_labels_index:{}".format(super_and_sub_dendro_labels_index))
 
         expected_output = pd.DataFrame([[1,  0,  5,  0],[4,  2,  3,  2],[4,  0,  3,  0],[4,  4,  5,  4],[1,  2,  3,  3],[1,  4,  5,  4]])
 
@@ -336,6 +336,7 @@ class TestSubandSuperClusters(unittest.TestCase):
 
     
     def test_loop_through_clusters(self):
+        logger.debug("\n \n \n test_loop_through_clusters:  \n \n ")
 
         total_linkage_matrix = pd.DataFrame([0,  1,  8.354102,  2.0, numpy.NaN, numpy.NaN])
         total_linkage_matrix = total_linkage_matrix.transpose()
@@ -355,12 +356,9 @@ class TestSubandSuperClusters(unittest.TestCase):
         self.assertTrue(expected_linkage.equals(new_linkage_matrix))
 
 
-    def test_prepare_metadata(self):
-        super_dendro_labels_index = [0, 1, 0, 1]
-        row_labels = [1, 0, 1, 0, 1, 0, 1]
+    def test_prepare_gctoo_for_json(self):
+        logger.debug("\n \n \n test_prepare_metadata:  \n \n ")
         data_df = pd.DataFrame([[1,2,3,3],[1,4,4,5],[4,4,4,5],[1,0,0,5],[4,2,2,3],[4,0,0,3],[0,0,0,1]])
-        num_col = len(data_df.columns)
-        num_row = len(data_df.index)
 
         row_meta = pd.DataFrame(["one", "two", "three", "four", "five", "six", "seven"])
         row_meta.columns = ["number"]
@@ -369,36 +367,40 @@ class TestSubandSuperClusters(unittest.TestCase):
 
         gctoo = cmapPy.pandasGEXpress.GCToo.GCToo(data_df, row_metadata_df=row_meta, col_metadata_df=col_meta, src=None, version=None, make_multiindex=False, logger_name='cmap_logger')
 
-        none_sorted_col_metadata_df, sorted_row_metadata_df = sasc.prepare_metadata(gctoo, data_df, super_dendro_labels_index, row_labels, num_row, num_col)
+        gctoo = sasc.prepare_gctoo_for_json(gctoo)
 
-        logger.debug("none_sorted_col_metadata_df: {}".format(none_sorted_col_metadata_df)) 
-        logger.debug("sorted_row_metadata_df: {}".format(sorted_row_metadata_df)) 
+        logger.debug("none_sorted_col_metadata_df: {}".format(gctoo.col_metadata_df)) 
+        logger.debug("sorted_row_metadata_df: {}".format(gctoo.row_metadata_df)) 
 
 
-        expected_outputrow_meta = pd.DataFrame(["one", "three", "five", "seven", "two","four", "six",])
-        expected_outputrow_meta.index = [0, 2, 4, 6, 1, 3, 5]
+        expected_outputrow_meta = pd.DataFrame(["seven", "six",  "five", "four", "three",  "two", "one"])
+        expected_outputrow_meta.index = [6, 5, 4, 3, 2, 1, 0]
         expected_outputrow_meta.columns = ["number"]
-        expected_outputcol_meta = pd.DataFrame(["two", "four", "one","three", ])
+        expected_outputcol_meta = pd.DataFrame(["four", "three","two", "one", ])
         expected_outputcol_meta.columns = ["number"]
-        expected_outputcol_meta.index = [1, 3, 0, 2]
+        expected_outputcol_meta.index = [3, 2, 1, 0]
 
-        self.assertTrue(expected_outputrow_meta.equals(sorted_row_metadata_df))
-        self.assertTrue(expected_outputcol_meta.equals(none_sorted_col_metadata_df))
+
+        self.assertTrue(expected_outputrow_meta.equals(gctoo.row_metadata_df))
+        self.assertTrue(expected_outputcol_meta.equals(gctoo.col_metadata_df))
 
 
 
 
     def test_create_json(self):
+        logger.debug("\n \n \n test_create_json:  \n \n ")
 
-        template_path = "template.json"
+
         output_path = "super_and_sub_file.json"
         sas_sorted_df = pd.DataFrame([[1,  0,  5,  0],[4,  2,  3,  2],[4,  0,  3,  0],[4,  4,  5,  4],[1,  2,  3,  3],[1,  4,  5,  4]])
-        col_metadata_df = pd.DataFrame([[0, 1, 2, 3]])
-        row_metadata_df = pd.DataFrame([[0, 1, 2, 3, 4, 5]])
+        col_metadata_df = pd.DataFrame([0, 1, 2, 3])
+        row_metadata_df = pd.DataFrame([0, 1, 2, 3, 4, 5])
         col_newick = "COLNEWICK"
         row_newick = "ROWNEWICK"
 
-        returned_output_path = sasc.create_json(template_path, output_path, sas_sorted_df, col_metadata_df, row_metadata_df, col_newick, row_newick)
+        gctoo = cmapPy.pandasGEXpress.GCToo.GCToo(sas_sorted_df, row_metadata_df=row_metadata_df, col_metadata_df=col_metadata_df, src=None, version=None, make_multiindex=False, logger_name='cmap_logger')
+
+        returned_output_path = sasc.create_json(summer2020py.morpheus_heatmap_template, output_path, gctoo, col_newick, row_newick)
 
         self.assertEqual(returned_output_path, output_path)
 
@@ -406,11 +408,9 @@ class TestSubandSuperClusters(unittest.TestCase):
     def test_main(self):
         logger.debug("\n \n \n test_main:  \n \n ")
 
-        #no need to create fake args as everything is hardcoded in right now
-        #will change
         args = sasc.build_parser().parse_args([
-            "--template_path", "template.json", 
-            "--gctx_path", "2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx",
+            #"--template_path", "template.json", 
+            "--input_GCToo_file", "2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx",
             "--output_path", "super_and_sub_file.json",
             "--row_or_col", "both",
             "--num_row", "1000"

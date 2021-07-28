@@ -15,6 +15,10 @@ import os
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
+class AffinityPropDidNotConverge(Exception):
+    """Raised when affinity prop does not converge"""
+    pass
+
 
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -37,7 +41,7 @@ def build_parser():
     Affinityargs.add_argument("--convergence_iter", "-c", default = 15, type = int, help = "Number of iterations with no change in the number of estimated clusters that stops the convergence.")
     Affinityargs.add_argument("--random_state", "-rs", default = 0, type = int, help = "Pseudo-random number generator to control the starting state. Use an int for reproducible results across function calls.")
     Affinityargs.add_argument("-affinity", "-a", default = 'euclidean', type = str, choices=['euclidean', 'precomputed'], help = "Which affinity to use. At the moment ‘precomputed’ and euclidean are supported. ‘euclidean’ uses the negative squared euclidean distance between points.")    
-
+    Affinityargs.add_argument("--Affinityverbose", "-av", default = False, type = bool, help = "Whether to be verbose.")
 
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
@@ -50,15 +54,9 @@ def build_parser():
 
 def load_data(num_rows, path):
 
-    #way of handeling when num_rows is not given
-    try:
-        ridx_val = list(range(num_rows))
-    except TypeError:
-        ridx_val = num_rows
+    ridx = None if num_rows is None else list(range(num_rows))
 
-
-
-    gctoo = cmapPy.pandasGEXpress.parse.parse(path, ridx = ridx_val)
+    gctoo = cmapPy.pandasGEXpress.parse.parse(path) if ridx is None else cmapPy.pandasGEXpress.parse.parse(path, ridx=ridx)
 
 
     logger.debug("gctoo{}".format(gctoo))
@@ -69,7 +67,10 @@ def run_AffinityProp(row_or_col, data_df, args):
     if row_or_col == "col":
         data_df = data_df.transpose()
 
-    Affinity_prop = sklearn.cluster.AffinityPropagation(damping= args.damping, max_iter= args.max_iter, convergence_iter= args.convergence_iter, affinity= args.affinity, random_state= args.random_state).fit(data_df.to_numpy())
+    Affinity_prop = sklearn.cluster.AffinityPropagation(damping= args.damping, max_iter= args.max_iter, convergence_iter= args.convergence_iter, affinity= args.affinity, random_state= args.random_state, verbose = args.Affinityverbose).fit(data_df.to_numpy())
+
+    if len(Affinity_prop.cluster_centers_indices_) == 0:
+        raise AffinityPropDidNotConverge 
 
     return Affinity_prop
 

@@ -45,7 +45,8 @@ class TestBuildDreamTree(unittest.TestCase):
             "--input_GCToo_file", "2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx",
             "--output_path", "super_and_sub_file.json",
             "--row_or_col", "both",
-            "--num_row", "1000"
+            "--num_row", "1000",
+            "--Affinityverbose", "True"
         ])
 
         Affinity_prop_row = bdt.run_AffinityProp("row", tiny_test_data_df, args)

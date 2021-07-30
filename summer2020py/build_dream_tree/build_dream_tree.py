@@ -36,12 +36,20 @@ def build_parser():
 
     Affinityargs = parser.add_argument_group('Affinityargs', 'Arguments to run affinity prop with')
 
-    Affinityargs.add_argument("--damping", "-d", default = 0.5, type = float, help = "Damping factor (between 0.5 and 1) is the extent to which the current value is maintained relative to incoming values (weighted 1 - damping). This in order to avoid numerical oscillations when updating these values (messages).")
-    Affinityargs.add_argument("--max_iter", "-m", default = 200, type = int, help = "Maximum number of iterations.")
-    Affinityargs.add_argument("--convergence_iter", "-c", default = 15, type = int, help = "Number of iterations with no change in the number of estimated clusters that stops the convergence.")
-    Affinityargs.add_argument("--random_state", "-rs", default = 0, type = int, help = "Pseudo-random number generator to control the starting state. Use an int for reproducible results across function calls.")
-    Affinityargs.add_argument("-affinity", "-a", default = 'euclidean', type = str, choices=['euclidean', 'precomputed'], help = "Which affinity to use. At the moment ‘precomputed’ and euclidean are supported. ‘euclidean’ uses the negative squared euclidean distance between points.")    
+    Affinityargs.add_argument("--damping", "-ad", default = 0.5, type = float, help = "Damping factor (between 0.5 and 1) is the extent to which the current value is maintained relative to incoming values (weighted 1 - damping). This in order to avoid numerical oscillations when updating these values (messages).")
+    Affinityargs.add_argument("--max_iter", "-am", default = 200, type = int, help = "Maximum number of iterations.")
+    Affinityargs.add_argument("--convergence_iter", "-ac", default = 15, type = int, help = "Number of iterations with no change in the number of estimated clusters that stops the convergence.")
+    Affinityargs.add_argument("--random_state", "-ars", default = 0, type = int, help = "Pseudo-random number generator to control the starting state. Use an int for reproducible results across function calls.")
+    Affinityargs.add_argument("-affinity", "-aa", default = 'euclidean', type = str, choices=['euclidean', 'precomputed'], help = "Which affinity to use. At the moment ‘precomputed’ and euclidean are supported. ‘euclidean’ uses the negative squared euclidean distance between points.")    
     Affinityargs.add_argument("--Affinityverbose", "-av", default = False, type = bool, help = "Whether to be verbose.")
+
+    #hierarchical clustering
+
+    Hierarchicalargs = parser.add_argument_group('Hierarchicalargs', 'Arguments to run hierarchical clustering with')
+    Hierarchicalargs.add_argument("--Hierarchicalaffinity", "-ha", default = 'euclidean', type = str, choices = ['euclidean', 'l1', 'l2', 'manhattan', 'cosine'], help = "Metric used to compute the linkage. Can be “euclidean”, “l1”, “l2”, “manhattan”, “cosine”, or “precomputed")
+    
+    #if it is ward, then affinity needs to be euclidean 
+    Hierarchicalargs.add_argument("--Hierarchicallinkage", "-hl", default = 'average', type = str, choices = ['ward', 'complete', 'average', 'single'], help = "Which linkage criterion to use. The linkage criterion determines which distance to use between sets of observation. ")
 
 
     parser.add_argument("--config_filepath", help="path to config file containing information about how to connect to CDD API, ArxLab API etc.",
@@ -168,10 +176,10 @@ def run_scipy_cluster_dendrogram(linkage_matrix):
     r_dict = dendrogram(linkage_matrix, distance_sort = "ascending")
     return r_dict
 
-def super_cluster(cluster_centers):
+def super_cluster(cluster_centers, args):
     #run and get ward_super_clusters
     #modify matrix to pass into
-    ward_super_clusters = sklearn.cluster.AgglomerativeClustering(affinity = "euclidean", n_clusters = len(cluster_centers), linkage = "average", compute_full_tree = True, compute_distances = True).fit(cluster_centers)
+    ward_super_clusters = sklearn.cluster.AgglomerativeClustering(affinity = args.Hierarchicalaffinity, n_clusters = len(cluster_centers), linkage = args.Hierarchicallinkage, compute_full_tree = True, compute_distances = True).fit(cluster_centers)
 
     children_df = pd.DataFrame(ward_super_clusters.children_)
     children_df[2] = ward_super_clusters.distances_
@@ -323,7 +331,7 @@ def prepare_super(df_super_linkage_matrix, handy_values):
     
     return df_super_linkage_matrix
 
-def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df):
+def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df, args):
     transposed_label_df = label_df.transpose()
 
     #commented out the logger.debug statements as printing out anything 1000+ times adds up
@@ -350,7 +358,7 @@ def loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_
         if sub_cluster.shape[0] != 1:
 
             # run ward
-            ward_sub_cluster = sklearn.cluster.AgglomerativeClustering(affinity = "euclidean", n_clusters = len(sub_cluster)-1, linkage = "average", compute_full_tree = True, compute_distances = True).fit(sub_cluster)
+            ward_sub_cluster = sklearn.cluster.AgglomerativeClustering(affinity = args.Hierarchicalaffinity, n_clusters = len(sub_cluster)-1, linkage = args.Hierarchicallinkage, compute_full_tree = True, compute_distances = True).fit(sub_cluster)
 
             sub_children_df = pd.DataFrame(ward_sub_cluster.children_)
             sub_children_df[2] = ward_sub_cluster.distances_
@@ -505,7 +513,7 @@ def create_dendrogram_from_df(row_or_col, data_df, args):
 
     cluster_centers = get_cluster_centers(data_df, AffinityProp.cluster_centers_indices_)
 
-    super_linkage_matrix, super_r_dict = super_cluster(cluster_centers)
+    super_linkage_matrix, super_r_dict = super_cluster(cluster_centers, args)
 
     super_dendro_labels_index = change_labels(super_r_dict["leaves"])
     
@@ -517,7 +525,7 @@ def create_dendrogram_from_df(row_or_col, data_df, args):
 
     num_row = len(data_df.index)
 
-    sub_and_super_linkage_matrix = loop_through_clusters(super_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df) 
+    sub_and_super_linkage_matrix = loop_through_clusters(super_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df, args) 
     
     sub_and_super_linkage_matrix = fix_linkage_matrix(sub_and_super_linkage_matrix)
 
@@ -597,6 +605,8 @@ def create_json(template, output_path, gctoo, col_newick, row_newick):
     sas_flipped_index = (list(gctoo.data_df.index))
     sas_flipped_col = (list(gctoo.data_df.columns))
 
+    gctoo.data_df = gctoo.data_df.round(3)
+
     flipped = gctoo.data_df.to_numpy()
 
     #template_file = open(template_path, "r")
@@ -631,21 +641,24 @@ def create_json(template, output_path, gctoo, col_newick, row_newick):
 
 
     for col in gctoo.col_metadata_df.iteritems():
-        Nan_to_none = col[1].where(col[1].notnull(), None)
+        Nan_to_none = col[1].fillna(value= "")
 
+        logger.debug("col, Nan_to_none: {}, {}".format(col[0], Nan_to_none))
 
         json_object["columns"].append(create_col_and_row_template(True, col[0]))
         dataset["columnMetadataModel"]["vectors"].append(create_col_and_row_metadata_template(True, col[0], Nan_to_none.to_list())) 
 
     for row in gctoo.row_metadata_df.iteritems(): 
-        Nan_to_none = row[1].where(row[1].notnull(), None)
+        Nan_to_none = row[1].fillna(value="")
+
+        logger.debug("col, Nan_to_none: {}, {}".format(col[0], Nan_to_none))
 
         json_object["rows"].append(create_col_and_row_template(True, row[0]))
         dataset["rowMetadataModel"]["vectors"].append(create_col_and_row_metadata_template(True, row[0], Nan_to_none.to_list()))
 
 
     output_file = open(output_path, "w")
-    json.dump(json_object, output_file)
+    json.dump(json_object, output_file, separators=(',', ':'))
     output_file.close()
     return output_path
 
@@ -681,6 +694,8 @@ def main(args):
 
 
 if __name__ == "__main__":
+    sys.setrecursionlimit(100000)
+
     args = build_parser().parse_args(sys.argv[1:])
 
     setup_logger.setup(verbose=args.verbose)

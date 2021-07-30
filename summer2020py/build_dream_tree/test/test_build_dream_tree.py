@@ -137,7 +137,14 @@ class TestBuildDreamTree(unittest.TestCase):
 
         col_cluster_centers = [[2, 4, 0, 2, 4, 0], [3, 5, 5, 3, 5, 3], [3, 5, 5, 3, 5, 4]]
 
-        super_linkage_matrix_with_counts, super_r_dict = bdt.super_cluster(col_cluster_centers)
+        args = bdt.build_parser().parse_args([
+            "--input_GCToo_file", "2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx",
+            "--output_path", "super_and_sub_file.json",
+            "--row_or_col", "both",
+            "--num_row", "1000"
+        ])
+
+        super_linkage_matrix_with_counts, super_r_dict = bdt.super_cluster(col_cluster_centers, args)
 
         expected_linkage = pd.DataFrame([[1,  2,  1.000000,  2.0],[0,  3, 6.436308967734172,  3.0]])
         logger.debug(" expected_linkage: \n{}".format( expected_linkage))
@@ -353,6 +360,14 @@ class TestBuildDreamTree(unittest.TestCase):
     def test_loop_through_clusters(self):
         logger.debug("\n \n \n test_loop_through_clusters:  \n \n ")
 
+        args = bdt.build_parser().parse_args([
+            "--input_GCToo_file", "2020_Q3_Achilles_CCLE_expression_r19144x1305.gctx",
+            "--output_path", "super_and_sub_file.json",
+            "--row_or_col", "both",
+            "--num_row", "1000"
+        ])
+
+
         total_linkage_matrix = pd.DataFrame([0,  1,  8.354102,  2.0, numpy.NaN, numpy.NaN])
         total_linkage_matrix = total_linkage_matrix.transpose()
         label_df =  pd.DataFrame([[1,2,3,3,0],[1,4,4,5,0],[1,0,0,5,1],[4,2,2,3,1],[4,4,4,5,0],[4,0,0,3,1],[0,1,2,3,20000]])
@@ -362,7 +377,7 @@ class TestBuildDreamTree(unittest.TestCase):
         data_df = pd.DataFrame([[1,2,3,3],[1,4,4,5],[4,4,4,5],[1,0,0,5],[4,2,2,3],[4,0,0,3],[0,0,0,1]])
         data_df = data_df.transpose()
 
-        new_linkage_matrix = bdt.loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df)
+        new_linkage_matrix = bdt.loop_through_clusters(total_linkage_matrix, label_df, num_row, super_dendro_labels_index, data_df, args)
 
         logger.debug("new_linkage_matrix:{}".format(new_linkage_matrix))
 

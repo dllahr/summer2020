@@ -674,11 +674,10 @@ def main(args):
     if args.damping < 0 or args.damping > 1:
         raise ViolationofSklearnargs
 
-
+    #these are the lines that load the gctoo
+    #to do precomputed instead of doing this, just load the precomputed into gctoo datadf
     input_GCToo_file = args.input_GCToo_file
     output_path = args.output_path
-
-
     gctoo = load_data(args.num_row, input_GCToo_file)
     
 

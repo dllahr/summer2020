@@ -19,6 +19,10 @@ class AffinityPropDidNotConverge(Exception):
     """Raised when affinity prop does not converge"""
     pass
 
+class ViolationofSklearnargs(Exception):
+    """Raised when args given for sklearn violate their requirments"""
+    pass
+
 
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -663,6 +667,12 @@ def create_json(template, output_path, gctoo, col_newick, row_newick):
     return output_path
 
 def main(args):
+
+    if args.Hierarchicallinkage == "ward" and args.Hierarchicalaffinity != "euclidean":
+        raise ViolationofSklearnargs
+
+    if args.damping < 0 or args.damping > 1:
+        raise ViolationofSklearnargs
 
 
     input_GCToo_file = args.input_GCToo_file

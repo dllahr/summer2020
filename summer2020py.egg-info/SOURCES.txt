@@ -1,9 +1,0 @@
-README.md
-setup.py
-summer2020py/__init__.py
-summer2020py/setup_logger.py
-summer2020py.egg-info/PKG-INFO
-summer2020py.egg-info/SOURCES.txt
-summer2020py.egg-info/dependency_links.txt
-summer2020py.egg-info/requires.txt
-summer2020py.egg-info/top_level.txt
